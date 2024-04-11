@@ -1,0 +1,9 @@
+{
+	"id": "aTgmZHPBYFYPfjW",
+	"json": "{\"id\":\"aTgmZHPBYFYPfjW\",\"url\":\"https://www.instagram.com/jacoby_pio/\",\"loadedUrl\":\"https://www.instagram.com/jacoby_pio/\",\"uniqueKey\":\"https://www.instagram.com/jacoby_pio\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{\"label\":\"detail\",\"__crawlee\":{\"skipNavigation\":false,\"state\":4}},\"handledAt\":\"2024-04-10T14:22:57.229Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://www.instagram.com/jacoby_pio",
+	"url": "https://www.instagram.com/jacoby_pio/"
+}

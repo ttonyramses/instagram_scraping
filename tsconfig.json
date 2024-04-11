@@ -1,14 +1,12 @@
 {
-    "extends": "@apify/tsconfig",
-    "compilerOptions": {
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "target": "ES2022",
-        "outDir": "dist",
-        "noUnusedLocals": false,
-        "lib": ["DOM"]
-    },
-    "include": [
-        "./src/**/*"
-    ]
+   "compilerOptions": {
+      
+      "target": "es2021",
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "outDir": "./build",
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "sourceMap": true
+   }
 }
