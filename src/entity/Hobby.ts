@@ -3,7 +3,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToMany, JoinTable, } from "
 
 import { User } from "./User";
 
-@Entity()
+@Entity({ name: 'hobbies' })
 export class Hobby {
 
     @PrimaryGeneratedColumn()

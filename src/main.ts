@@ -32,7 +32,7 @@ const crawler = new PlaywrightCrawler({
 
 AppDataSource.initialize().then(async () => {
 
-    console.log("Inserting a new hobby into the database...")
+    /*console.log("Inserting a new hobby into the database...")
     const hobby = new Hobby()
     hobby.name = "Musique"
     await AppDataSource.manager.save(hobby)
@@ -61,11 +61,31 @@ AppDataSource.initialize().then(async () => {
 
     console.log("Loading hobbys from the database...")
     const hobbys = await AppDataSource.manager.find(Hobby)
-    console.log("Loaded Hobbys: ", hobbys)
+    console.log("Loaded Hobbys: ", hobbys)*/
 
-    /*console.log("Loading users from the database...")
-    const followers = await AppDataSource.manager.find(User)
-    console.log("Loaded users: ", users)*/
+    const userRepository = AppDataSource.getRepository(User);
+        
+        // Charger tous les utilisateurs avec leurs followers, followings et hobbies
+        const usersWithRelations = await userRepository.find({ 
+            relations: ['followers', 'followings', 'hobbies'] 
+        });
+
+        usersWithRelations.forEach(user => {
+            console.log('Utilisateur :', user);
+            console.log('Followers :', user.followers);
+            console.log('Followings :', user.followings);
+            console.log('Hobbies :', user.hobbies);
+            console.log('---------------------');
+        });
+
+        
+
+
+
+    
+
+   
+    
 
 
 

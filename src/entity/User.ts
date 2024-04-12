@@ -2,7 +2,7 @@
 import { Entity, Column, PrimaryColumn, ManyToMany, JoinTable, } from "typeorm"
 import { Hobby } from "./Hobby"
 
-@Entity()
+@Entity({ name: 'insta_user' })
 export class User {
 
     @PrimaryColumn("text")
@@ -25,13 +25,13 @@ export class User {
         //cascade: true,
       })
       @JoinTable({
-        name: 'Followers', // table name for the junction table of this relation
+        name: 'user_followers', // table name for the junction table of this relation
         joinColumn: {
-          name: 'follower_id',
+          name: 'user_id',
           referencedColumnName: 'id',
         },
         inverseJoinColumn: {
-          name: 'user_id',
+          name: 'follower_id',
           referencedColumnName: 'id',
         },
       })
@@ -44,13 +44,13 @@ export class User {
         //cascade: true,
       })
       @JoinTable({
-        name: 'Followings', // table name for the junction table of this relation
+        name: 'user_followings', // table name for the junction table of this relation
         joinColumn: {
-          name: 'follower_id',
+          name: 'user_id',
           referencedColumnName: 'id',
         },
         inverseJoinColumn: {
-          name: 'user_id',
+          name: 'following_id',
           referencedColumnName: 'id',
         },
       })
@@ -61,7 +61,7 @@ export class User {
         //cascade: true,
       })
       @JoinTable({
-        name: 'User_Hobby', // table name for the junction table of this relation
+        name: 'user_hobby', // table name for the junction table of this relation
         joinColumn: {
           name: 'user_id',
           referencedColumnName: 'id',
