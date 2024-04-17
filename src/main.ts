@@ -63,7 +63,7 @@ AppDataSource.initialize().then(async () => {
     const hobbys = await AppDataSource.manager.find(Hobby)
     console.log("Loaded Hobbys: ", hobbys)*/
 
-    const userRepository = AppDataSource.getRepository(User);
+   /* const userRepository = AppDataSource.getRepository(User);
         
         // Charger tous les utilisateurs avec leurs followers, followings et hobbies
         const usersWithRelations = await userRepository.find({ 
@@ -76,7 +76,7 @@ AppDataSource.initialize().then(async () => {
             console.log('Followings :', user.followings);
             console.log('Hobbies :', user.hobbies);
             console.log('---------------------');
-        });
+        });*/
 
         
 

@@ -8,8 +8,8 @@ export class User {
     @PrimaryColumn("text")
     id: string
 
-    @Column("text")
-    name: string
+    @Column("text", { nullable: true })
+    name: string | null
 
     @Column("text", { nullable: true })
     biography: string | null 
