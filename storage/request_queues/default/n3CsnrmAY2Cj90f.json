@@ -1,0 +1,9 @@
+{
+	"id": "n3CsnrmAY2Cj90f",
+	"json": "{\"id\":\"n3CsnrmAY2Cj90f\",\"url\":\"https://www.instagram.com/jeanclaude.mendes/\",\"loadedUrl\":\"https://www.instagram.com/jeanclaude.mendes/\",\"uniqueKey\":\"https://www.instagram.com/jeanclaude.mendes\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[\"mouse.wheel: Target page, context or browser has been closed\\n    at PlaywrightCrawler.pageFunction (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\src\\\\getFollowersOfOneUser.ts:145:26)\\n    at wrap (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\node_modules\\\\@apify\\\\src\\\\index.ts:77:27)\"],\"headers\":{},\"userData\":{\"__crawlee\":{\"state\":5}},\"handledAt\":\"2024-04-24T10:22:41.580Z\"}",
+	"method": "GET",
+	"orderNo": null,
+	"retryCount": 0,
+	"uniqueKey": "https://www.instagram.com/jeanclaude.mendes",
+	"url": "https://www.instagram.com/jeanclaude.mendes/"
+}

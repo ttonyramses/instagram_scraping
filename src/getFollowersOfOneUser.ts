@@ -1,4 +1,6 @@
-import { PlaywrightCrawler, PlaywrightCrawlingContext, Dataset, sleep } from 'crawlee';
+import { PlaywrightCrawler, PlaywrightCrawlingContext, Browser, Dataset, sleep } from 'crawlee';
+
+
 
 import "reflect-metadata";
 
@@ -162,6 +164,8 @@ async function pageFunction(context: PlaywrightCrawlingContext) {
 
     log.info('Scrolled to bottom of the specified element.');
 
+    
+
 
     
 }
@@ -172,6 +176,8 @@ const crawler = new PlaywrightCrawler({
 
     preNavigationHooks: [
         async (crawlingContext, gotoOptions) => {
+
+            
             const { page } = crawlingContext;
             
           //const context =  crawlingContext.page.context();
@@ -181,7 +187,10 @@ const crawler = new PlaywrightCrawler({
           gotoOptions.timeout = 600000;
             
         },
+        
     ],
+    maxConcurrency: 5,  // Nombre maximum de navigateurs à exécuter simultanément
+    maxRequestsPerCrawl: 1000000,  // Nombre maximal de requêtes par crawl
 
     maxRequestRetries: 0,
 

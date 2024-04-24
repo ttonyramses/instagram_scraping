@@ -1,29 +1,39 @@
 {
-  "requestsFinished": 1,
-  "requestsFailed": 0,
+  "requestsFinished": 0,
+  "requestsFailed": 1,
   "requestsRetries": 0,
   "requestsFailedPerMinute": 0,
   "requestsFinishedPerMinute": 0,
-  "requestMinDurationMillis": 310483,
-  "requestMaxDurationMillis": 310483,
-  "requestTotalFailedDurationMillis": 0,
-  "requestTotalFinishedDurationMillis": 310483,
-  "crawlerStartedAt": "2024-04-24T08:46:32.509Z",
-  "crawlerFinishedAt": "2024-04-24T08:51:43.217Z",
-  "statsPersistedAt": "2024-04-24T08:51:43.217Z",
-  "crawlerRuntimeMillis": 310791,
-  "crawlerLastStartTimestamp": 1713948392426,
+  "requestMinDurationMillis": null,
+  "requestMaxDurationMillis": 0,
+  "requestTotalFailedDurationMillis": 308841,
+  "requestTotalFinishedDurationMillis": 0,
+  "crawlerStartedAt": "2024-04-24T10:17:32.442Z",
+  "crawlerFinishedAt": "2024-04-24T10:22:41.668Z",
+  "statsPersistedAt": "2024-04-24T10:22:41.668Z",
+  "crawlerRuntimeMillis": 309322,
+  "crawlerLastStartTimestamp": 1713953852346,
   "requestRetryHistogram": [
     1
   ],
   "statsId": 0,
-  "requestAvgFailedDurationMillis": null,
-  "requestAvgFinishedDurationMillis": 310483,
-  "requestTotalDurationMillis": 310483,
+  "requestAvgFailedDurationMillis": 308841,
+  "requestAvgFinishedDurationMillis": null,
+  "requestTotalDurationMillis": 308841,
   "requestsTotal": 1,
   "requestsWithStatusCode": {
     "200": 1
   },
-  "errors": {},
+  "errors": {
+    "E:\\Projet_Instagram\\Crawlee\\my-crawler\\src\\getFollowersOfOneUser.ts:145:26": {
+      "missing error code": {
+        "Error": {
+          "mouse.wheel: Target page, context or browser has been closed": {
+            "count": 1
+          }
+        }
+      }
+    }
+  },
   "retryErrors": {}
 }
