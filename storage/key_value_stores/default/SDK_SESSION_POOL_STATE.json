@@ -3,7 +3,7 @@
   "retiredSessionsCount": 0,
   "sessions": [
     {
-      "id": "session_ydHXbm2P28",
+      "id": "session_KfWz8wNGHT",
       "cookieJar": {
         "version": "tough-cookie@4.1.3",
         "storeType": "MemoryCookieStore",
@@ -16,14 +16,14 @@
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2024-04-17T23:30:33.663Z",
-      "createdAt": "2024-04-17T22:40:33.663Z",
+      "expiresAt": "2024-04-24T09:36:32.620Z",
+      "createdAt": "2024-04-24T08:46:32.620Z",
       "usageCount": 0,
       "maxUsageCount": 50,
       "errorScore": 0
     },
     {
-      "id": "session_IuEdhCCj11",
+      "id": "session_Qzf6UPz7Bf",
       "cookieJar": {
         "version": "tough-cookie@4.1.3",
         "storeType": "MemoryCookieStore",
@@ -33,124 +33,85 @@
         "prefixSecurity": "silent",
         "cookies": [
           {
-            "key": "csrftoken",
-            "value": "xORYOtm8cU5DkDzFTv6sLSi6buupGjc2",
-            "expires": "2025-04-16T22:40:37.941Z",
-            "domain": "instagram.com",
+            "key": "_ga_62P18XN9NS",
+            "value": "GS1.1.1713948399.1.0.1713948399.60.0.0",
+            "expires": "2025-05-29T08:46:40.029Z",
+            "domain": "crawlee.dev",
             "path": "/",
-            "secure": true,
             "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.055Z",
-            "lastAccessed": "2024-04-17T22:40:38.055Z"
+            "creation": "2024-04-24T08:46:40.945Z",
+            "lastAccessed": "2024-04-24T08:46:40.945Z"
           },
           {
-            "key": "datr",
-            "value": "tUUVZinWo2PAdQB7cBHjgTAB",
-            "expires": "2024-04-17T23:30:38.053Z",
-            "domain": "instagram.com",
+            "key": "_ga",
+            "value": "GA1.1.1330536732.1713948400",
+            "expires": "2025-05-29T08:46:40.254Z",
+            "domain": "crawlee.dev",
             "path": "/",
             "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.063Z",
-            "lastAccessed": "2024-04-17T22:40:38.063Z"
+            "creation": "2024-04-24T08:46:40.949Z",
+            "lastAccessed": "2024-04-24T08:46:40.949Z"
           },
           {
-            "key": "ds_user_id",
-            "value": "4946970290",
-            "expires": "2024-07-16T22:40:37.942Z",
-            "domain": "instagram.com",
+            "key": "_ga_1MGJDMV8DX",
+            "value": "GS1.1.1713948400.1.0.1713948400.0.0.0",
+            "expires": "2025-05-29T08:46:40.253Z",
+            "domain": "crawlee.dev",
             "path": "/",
-            "secure": true,
             "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.065Z",
-            "lastAccessed": "2024-04-17T22:40:38.065Z"
+            "creation": "2024-04-24T08:46:40.952Z",
+            "lastAccessed": "2024-04-24T08:46:40.952Z"
           },
           {
-            "key": "ig_did",
-            "value": "B90476AC-8903-47C6-853D-8A65840774E0",
-            "expires": "2024-04-17T23:30:38.053Z",
-            "domain": "instagram.com",
+            "key": "__hstc",
+            "value": "7591405.db5aa8aa000e76ae074a06b341cd5b3c.1713948400893.1713948400893.1713948400893.1",
+            "expires": "2024-10-21T08:46:40.000Z",
+            "domain": "crawlee.dev",
             "path": "/",
             "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.066Z",
-            "lastAccessed": "2024-04-17T22:40:38.066Z"
+            "creation": "2024-04-24T08:46:40.955Z",
+            "lastAccessed": "2024-04-24T08:46:40.955Z"
           },
           {
-            "key": "mid",
-            "value": "ZhVFpQALAAFs0Wn9o79IvzNadiYy",
-            "expires": "2024-04-17T23:30:38.053Z",
-            "domain": "instagram.com",
+            "key": "hubspotutk",
+            "value": "db5aa8aa000e76ae074a06b341cd5b3c",
+            "expires": "2024-10-21T08:46:40.000Z",
+            "domain": "crawlee.dev",
             "path": "/",
             "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.067Z",
-            "lastAccessed": "2024-04-17T22:40:38.067Z"
+            "creation": "2024-04-24T08:46:40.958Z",
+            "lastAccessed": "2024-04-24T08:46:40.958Z"
           },
           {
-            "key": "sessionid",
-            "value": "4946970290%3AoG7VqeA9iFTjct%3A20%3AAYf3CnM_lwfkqoforjZIsADIHNgl6bFZ6NNMwUHNIA",
-            "expires": "2024-04-17T23:30:38.053Z",
-            "domain": "instagram.com",
+            "key": "__hssrc",
+            "value": "1",
+            "expires": "2024-04-24T09:36:40.940Z",
+            "domain": "crawlee.dev",
             "path": "/",
             "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.068Z",
-            "lastAccessed": "2024-04-17T22:40:38.068Z"
+            "creation": "2024-04-24T08:46:40.962Z",
+            "lastAccessed": "2024-04-24T08:46:40.962Z"
           },
           {
-            "key": "dpr",
-            "value": "1.5",
-            "expires": "2024-04-24T22:40:37.000Z",
-            "domain": "instagram.com",
+            "key": "__hssc",
+            "value": "7591405.1.1713948400894",
+            "expires": "2024-04-24T09:16:40.000Z",
+            "domain": "crawlee.dev",
             "path": "/",
-            "secure": true,
             "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.069Z",
-            "lastAccessed": "2024-04-17T22:40:38.069Z"
-          },
-          {
-            "key": "shbid",
-            "value": "\"18786\\0544946970290\\0541744929637:01f702128ffd35761f23aed333002cd99800081672d03a44fbc60cc15d90d7b5e98848af\"",
-            "expires": "2024-04-24T22:40:37.941Z",
-            "domain": "instagram.com",
-            "path": "/",
-            "secure": true,
-            "httpOnly": true,
-            "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.070Z",
-            "lastAccessed": "2024-04-17T22:40:38.070Z"
-          },
-          {
-            "key": "shbts",
-            "value": "\"1713393637\\0544946970290\\0541744929637:01f7c0e5a1cd8ad8dc4f37fe9bcfe5c30fdb7658a9f92ec32d8aecb9bdd14d4203b14634\"",
-            "expires": "2024-04-24T22:40:37.941Z",
-            "domain": "instagram.com",
-            "path": "/",
-            "secure": true,
-            "httpOnly": true,
-            "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.071Z",
-            "lastAccessed": "2024-04-17T22:40:38.071Z"
-          },
-          {
-            "key": "rur",
-            "value": "\"CLN\\0544946970290\\0541744929637:01f797c7ba7e91b5b25b2de4d539e569ca5e393b067bab7f81a8554e7f0217af9a3e5f01\"",
-            "expires": "2024-04-17T23:30:38.053Z",
-            "domain": "instagram.com",
-            "path": "/",
-            "secure": true,
-            "httpOnly": true,
-            "hostOnly": false,
-            "creation": "2024-04-17T22:40:38.072Z",
-            "lastAccessed": "2024-04-17T22:40:38.072Z"
+            "creation": "2024-04-24T08:46:40.965Z",
+            "lastAccessed": "2024-04-24T08:46:40.965Z"
           }
         ]
       },
       "userData": {},
       "maxErrorScore": 3,
       "errorScoreDecrement": 0.5,
-      "expiresAt": "2024-04-17T23:30:33.668Z",
-      "createdAt": "2024-04-17T22:40:33.668Z",
-      "usageCount": 1,
+      "expiresAt": "2024-04-24T09:36:32.658Z",
+      "createdAt": "2024-04-24T08:46:32.658Z",
+      "usageCount": 2,
       "maxUsageCount": 50,
-      "errorScore": 1
+      "errorScore": 0
     }
   ]
 }

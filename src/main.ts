@@ -49,7 +49,7 @@ AppDataSource.initialize().then(async () => {
     const user2 = new User()
     user2.name = "Timberlake"
     user2.id = "Sawe2"
-    user2.followers = [user1]
+    user2.followers = [ ...user2.follower, user1]
     user2.hobby = [hobby]
     await AppDataSource.manager.save(user2)
     console.log("Saved a new user with id: " + user2.id)

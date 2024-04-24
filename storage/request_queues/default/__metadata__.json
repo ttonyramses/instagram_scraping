@@ -1,0 +1,13 @@
+{
+	"accessedAt": "2024-04-24T08:51:43.156Z",
+	"createdAt": "2024-04-24T08:46:32.555Z",
+	"hadMultipleClients": false,
+	"handledRequestCount": 1,
+	"id": "d4a3db2d-f692-44fd-802d-71cb87cd207d",
+	"modifiedAt": "2024-04-24T08:51:43.112Z",
+	"name": "default",
+	"pendingRequestCount": 0,
+	"stats": {},
+	"totalRequestCount": 1,
+	"userId": "1"
+}

@@ -1,9 +1,0 @@
-{
-	"id": "tA6skhMggc4w3VT",
-	"json": "{\"id\":\"tA6skhMggc4w3VT\",\"url\":\"https://www.instagram.com/luc_mndn/\",\"loadedUrl\":\"https://www.instagram.com/luc_mndn/\",\"uniqueKey\":\"https://www.instagram.com/luc_mndn\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":1,\"errorMessages\":[\"page.waitForNavigation: Target page, context or browser has been closed\\n=========================== logs ===========================\\nwaiting for navigation until \\\"load\\\"\\n============================================================\\n    at PlaywrightCrawler.pageFunction (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\src\\\\getFollowersOfOneUser.ts:31:16)\\n    at wrap (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\node_modules\\\\@apify\\\\src\\\\index.ts:77:27)\"],\"headers\":{},\"userData\":{\"__crawlee\":{\"state\":5}}}",
-	"method": "GET",
-	"orderNo": 1713393655276,
-	"retryCount": 1,
-	"uniqueKey": "https://www.instagram.com/luc_mndn",
-	"url": "https://www.instagram.com/luc_mndn/"
-}

@@ -4,30 +4,29 @@
    "type": "module",
    "description": "This is an example of a Crawlee project.",
    "dependencies": {
-       "crawlee": "^3.0.0",
-       "playwright": "*",
-       "typeorm": "0.3.20",
+      "crawlee": "^3.0.0",
+      "playwright": "*",
       "reflect-metadata": "^0.2.1",
-      "sqlite3": "^5.1.7"
+      "sqlite3": "^5.1.7",
+      "typeorm": "0.3.20"
    },
    "devDependencies": {
-       "@apify/tsconfig": "^0.1.0",
-       "tsx": "^4.4.0",
-       "typescript": "^5.4.2",
-       "@types/node": "^20.11.25",
-       "ts-node": "^10.9.2"
+      "@apify/tsconfig": "^0.1.0",
+      "@types/debug": "^4.1.12",
+      "@types/node": "^20.11.25",
+      "ts-node": "^10.9.2",
+      "tsx": "^4.4.0",
+      "typescript": "^5.4.2"
    },
-  
    "scripts": {
-       "start": "npm run start:dev",
-       "start:prod": "node dist/main.js",
-       "start:dev": "tsx src/getFollowersOfOneUser.ts",
-       "build": "tsc",
-       "test": "echo \"Error: oops, the actor has no tests yet, sad!\" && exit 1",
-       "postinstall": "npx crawlee install-playwright-browsers",
-       "typeorm": "typeorm-ts-node-commonjs"
+      "start": "npm run start:dev",
+      "start:prod": "node dist/main.js",
+      "start:dev": "tsx src/test.ts",
+      "build": "tsc",
+      "test": "echo \"Error: oops, the actor has no tests yet, sad!\" && exit 1",
+      "postinstall": "npx crawlee install-playwright-browsers",
+      "typeorm": "typeorm-ts-node-commonjs"
    },
    "author": "It's not you it's me",
    "license": "ISC"
 }
-
