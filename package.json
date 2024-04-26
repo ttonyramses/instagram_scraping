@@ -1,32 +1,34 @@
 {
-   "name": "my-crawler",
-   "version": "0.0.1",
-   "type": "module",
-   "description": "This is an example of a Crawlee project.",
-   "dependencies": {
-      "commander": "^12.0.0",
-      "crawlee": "^3.0.0",
-      "playwright": "*",
-      "reflect-metadata": "^0.2.1",
-      "sqlite3": "^5.1.7",
-      "typeorm": "0.3.20"
-   },
-   "devDependencies": {
-      "@apify/tsconfig": "^0.1.0",
-      "@types/node": "^20.12.7",
-      "ts-node": "^10.9.2",
-      "tsx": "^4.4.0",
-      "typescript": "^5.4.5"
-   },
-   "scripts": {
-      "start": "npm run start:dev",
-      "start:prod": "node dist/main.js",
-      "start:dev": "tsx src/cli.ts",
-      "build": "tsc",
-      "test": "echo \"Error: oops, the actor has no tests yet, sad!\" && exit 1",
-      "postinstall": "npx crawlee install-playwright-browsers",
-      "typeorm": "typeorm-ts-node-commonjs"
-   },
-   "author": "It's not you it's me",
-   "license": "ISC"
+  "name": "instagram_scraping",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "This is an example of a Crawlee project.",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "dotenv": "^16.4.5",
+    "inversify": "^6.0.2",
+    "playwright": "^1.42.1",
+    "reflect-metadata": "^0.2.1",
+    "sqlite3": "^5.1.7",
+    "typeorm": "0.3.20",
+    "winston": "^3.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "prettier": "^3.2.5",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.4.0",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "start": "npm run start:dev",
+    "start:prod": "node dist/main.js",
+    "start:dev": "tsx src/main.ts",
+    "build": "tsc",
+    "test": "echo \"Error: oops, the actor has no tests yet, sad!\" && exit 1",
+    "postinstall": "npx playwright install",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\""
+  },
+  "author": "It's not you it's me",
+  "license": "ISC"
 }

@@ -1,23 +1,41 @@
-import cookies from './cookies.json' assert { type: 'json'};
-import { AppDataSource } from "./data-source";
-import { User } from "./entity/User";
+import 'reflect-metadata';
+import * as dotenv from 'dotenv';
 
-import { scrape_users } from './scrawl_many_users';
-import { get_follow_user } from './getFollowersOfOneUser';
+import { UserService } from './modules/user/service/user.service';
+import { Database } from 'sqlite3';
+import { DatabaseService } from './database/service/database.service';
+import container from './core/container.core';
+import { TYPES } from './core/type.core';
+import { IDatabaseService } from './database/interface/idatabase.service';
+import { IUserService } from './modules/user/interface/iuser.service';
 
-export async function get_profil_data(user_arg? : string){
+dotenv.config();
 
-    if(user_arg){
-        await scrape_users(user_arg)
-    }
-    else{
-        await scrape_users()
-    }
+async function bootstrap(): Promise<void> {
+  const databaseService = container.get<IDatabaseService>(
+    TYPES.IDatabaseService,
+  );
+  try {
+    await databaseService.openConnection();
+    const userService = container.get<IUserService>(TYPES.IUserService);
+
+    await userService.createOrUpdate({ id: 'ttonyramses' });
+    await userService.createOrUpdate({ id: 'jacob_pio' });
+
+    const users = await userService.findAll();
+
+    console.log('users = ', users);
+
+    process.on('SIGINT', async () => {
+      await databaseService.closeConnection();
+    });
+  } catch (err) {
+    console.log('=================================================');
+    console.log(err);
+     await databaseService.closeConnection();
+  } finally {
+    await databaseService.closeConnection();
+  }
 }
 
-export async function get_follow(user_arg? : string){
-    await get_follow_user()
-}
-
-
-
+bootstrap();

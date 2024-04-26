@@ -1,5 +1,4 @@
-
-{
+/* {
    "compilerOptions": {
      "module": "CommonJS",
      "target": "ES6",
@@ -12,7 +11,35 @@
       "sourceMap": true
    },
    "include": [
-     "src/**/*"
+     "src\/**\/*"
    ]
  }
- 
+  */
+
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["es6", "dom"],
+    "types": ["reflect-metadata"],
+    "module": "ES2022",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    
+    "outDir": "./dist",
+    "esModuleInterop": true,
+   
+    "declaration": true,
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "sourceMap": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false
+   },
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
