@@ -22,7 +22,7 @@ export class User {
 
     @ManyToMany((type) => User, (user) => user.followers, {
         //cascade: ['insert', 'update'],
-        //cascade: true,
+        cascade: true,
       })
       @JoinTable({
         name: 'user_followers', // table name for the junction table of this relation
@@ -41,7 +41,7 @@ export class User {
 
       @ManyToMany((type) => User, (user) => user.followings, {
         //cascade: ['insert', 'update'],
-        //cascade: true,
+        cascade: true,
       })
       @JoinTable({
         name: 'user_followings', // table name for the junction table of this relation
@@ -58,7 +58,7 @@ export class User {
 
       @ManyToMany((type) => Hobby, (hobby) => hobby.users, {
         //cascade: ['insert', 'update'],
-        //cascade: true,
+        cascade: true,
       })
       @JoinTable({
         name: 'user_hobby', // table name for the junction table of this relation

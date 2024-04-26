@@ -14,7 +14,7 @@ export class Hobby {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('varchar')
+  @Column('varchar', {unique: true})
   name: string;
 
   @ManyToMany((type) => User, (user) => user.hobbies)
