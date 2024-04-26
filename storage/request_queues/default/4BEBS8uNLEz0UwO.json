@@ -1,9 +1,9 @@
 {
 	"id": "4BEBS8uNLEz0UwO",
-	"json": "{\"id\":\"4BEBS8uNLEz0UwO\",\"url\":\"https://www.instagram.com/akpa.jacques/\",\"uniqueKey\":\"https://www.instagram.com/akpa.jacques\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":0,\"errorMessages\":[],\"headers\":{},\"userData\":{}}",
+	"json": "{\"id\":\"4BEBS8uNLEz0UwO\",\"url\":\"https://www.instagram.com/akpa.jacques/\",\"loadedUrl\":\"https://www.instagram.com/akpa.jacques/\",\"uniqueKey\":\"https://www.instagram.com/akpa.jacques\",\"method\":\"GET\",\"noRetry\":false,\"retryCount\":2,\"errorMessages\":[\"locator.textContent: Timeout 30000ms exceeded.\\nCall log:\\n  \\u001b[2m- waiting for locator('main.xvbhtw8 header.x1qjc9v5 section div.x7a106z h1').first()\\u001b[22m\\n\\n    at PlaywrightCrawler.pageFunction (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\src\\\\scrawl_one_user.ts:51:105)\\n    at wrap (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\node_modules\\\\@apify\\\\src\\\\index.ts:77:27)\",\"locator.textContent: Target page, context or browser has been closed\\nCall log:\\n  \\u001b[2m- waiting for locator('main.xvbhtw8 header.x1qjc9v5 section div.x7a106z h1').first()\\u001b[22m\\n\\n    at PlaywrightCrawler.pageFunction (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\src\\\\scrawl_one_user.ts:51:105)\\n    at wrap (E:\\\\Projet_Instagram\\\\Crawlee\\\\my-crawler\\\\node_modules\\\\@apify\\\\src\\\\index.ts:77:27)\"],\"headers\":{},\"userData\":{\"__crawlee\":{\"state\":5}}}",
 	"method": "GET",
-	"orderNo": 1714046874986,
-	"retryCount": 0,
+	"orderNo": 1714141841932,
+	"retryCount": 2,
 	"uniqueKey": "https://www.instagram.com/akpa.jacques",
 	"url": "https://www.instagram.com/akpa.jacques/"
 }

@@ -2,15 +2,20 @@ import { scrape } from './scrawl_one_user';
 import { AppDataSource } from "./data-source";
 import { User } from "./entity/User";
 
-export async function scrape_users(user_arg? : string){
+export async function scrape_users(user_arg : string[] = []){
 AppDataSource.initialize().then(async () => {
 
     let urls_pseudo = []
 
     if(user_arg){
-        console.log(user_arg);
-        const url_pseudo = 'https://www.instagram.com/' + user_arg +'/'
-        urls_pseudo.push(url_pseudo)
+
+        for (const user of user_arg) {
+
+            console.log(user);
+            const url_pseudo = 'https://www.instagram.com/' + user +'/'
+            urls_pseudo.push(url_pseudo)
+    
+        }
     }
     else{
     console.log("Loading users from the database...")
@@ -61,4 +66,4 @@ AppDataSource.initialize().then(async () => {
 
 
 
-//scrape('luc_mndn');
+scrape_users(['akpa.jacques']);

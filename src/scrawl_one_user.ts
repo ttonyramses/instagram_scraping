@@ -39,7 +39,7 @@ async function pageFunction(context: PlaywrightCrawlingContext) {
 
     // Exemple d'extraction des données des balises h1
    // const data = await page.$$eval('h1', (headers) => headers.map(h => h.textContent));
-   await sleep(30_000);
+   await sleep(3_000);
     const pseudo = await page.locator('main.xvbhtw8 header.x1qjc9v5 section div.x9f619').first().textContent();
     
     const nbOfFollowers = await page.locator('main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(2) span._ac2a').first().textContent();
@@ -90,6 +90,7 @@ const crawler = new PlaywrightCrawler({
         },
     ],
     // Fonction à exécuter pour chaque page ouverte
+    requestHandlerTimeoutSecs: 3600,
     requestHandler: pageFunction,
     
     headless: false,

@@ -2,18 +2,25 @@ import { program } from 'commander';
 import * as main from './main';
 
 program
-  .name('function-runner')
-  .description('CLI to run specific functions from main module with optional arguments')
   .version('0.1.0')
-  .argument('<functionName>', 'name of the function to execute')
-  .argument('[arg]', 'optional argument for the function')
-  .action((functionName, arg) => {
-    const fn = (main as any)[functionName];
-    if (typeof fn === 'function') {
-      fn(arg); // Passing the optional argument to the function
+  .command('get_profil_data')
+  .description('Get all profile data from one Instagram user or many users')
+  .option('-u, --users <user>', 'Add a user to the scrape list', collect, [])
+  .action((option) => {
+    if (option.users.length > 0) {
+      
+        console.log(`Processing profile data for users:`);
+        main.get_profil_data(options.users); // Assuming get_profil_data can be called for each user
+      
     } else {
-      console.error('Function does not exist:', functionName);
+      console.log('No users specified, scraping default set');
+      // Handle the case where no users are specified
+      main.get_profil_data();
     }
   });
+
+function collect(value, previous) {
+  return previous.concat(value);
+}
 
 program.parse(process.argv);
