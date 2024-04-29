@@ -44,7 +44,7 @@ async function bootstrap(): Promise<void> {
     console.log('users = ', users);
     console.log('user_tony = ', user_tony);
 
-    await scrapingService.getOneInfos('ttonyramses', false, 'cookies.json');
+    //await scrapingService.getOneInfos('ttonyramses', false, 'cookies.json');
 
     process.on('SIGINT', async () => {
       await databaseService.closeConnection();
