@@ -30,6 +30,11 @@ export class ScrapingService implements IScrapingService {
     const user = await this.userService.findOneUser(pseudo);
     console.log('user =', user);
     console.log('force =', force);
+    if (!user) {
+      console.log('user ' + pseudo + 'not found ');
+      return;
+    }
+    
     if (user.hasInfo && !force) {
       console.log(
         'Les information de ' +
