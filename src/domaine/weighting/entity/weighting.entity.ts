@@ -1,0 +1,29 @@
+//import "reflect-metadata";
+import {
+  Entity,
+  Column,
+  ManyToOne,
+  Unique,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { User } from '../../user/entity/user.entity';
+import { Hobby } from '../../hobby/entity/hobby.entity';
+
+
+@Entity({ name: 'weighting' })
+export class weighting {
+
+  @PrimaryGeneratedColumn()
+  id : number;
+  
+  @ManyToOne(() => Hobby)
+  hobby: Hobby;
+
+  
+  @ManyToOne(() => User)
+  user: User;
+
+  @Column('int')
+  score: number;
+}
