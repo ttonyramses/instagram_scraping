@@ -18,8 +18,8 @@ program
   .action(async (options) => {
     console.log('scrap-info')
     console.log(options)
-    await bootstrap((scrapingService) => {
-      scrapingService.getAllInfos(
+    await bootstrap(async (scrapingService) => {
+      await scrapingService.getAllInfos(
         options.force ?? false,
         options.cookie,
          options.users,
@@ -36,8 +36,8 @@ program
   .action(async (options) => {
     console.log('scrap-follow')
     console.log(options)
-    await bootstrap((scrapingService) => {
-      scrapingService.getAllFollow(
+    await bootstrap(async (scrapingService) => {
+      await scrapingService.getAllFollow(
         options.force ?? false,
         options.cookie,
         options.users,
@@ -59,8 +59,8 @@ program
   .action(async (options) => {
     console.log('add-hobby')
     console.log(options)
-    await bootstrap((scrapingService) => {
-      scrapingService.applyHobbies(options.hobbies, options.users);
+    await bootstrap(async (scrapingService) => {
+      await scrapingService.applyHobbies(options.hobbies, options.users);
     });
   });
 
@@ -75,7 +75,7 @@ program
 program.parse(process.argv);
 
 async function bootstrap(
-  callback: (scrapingService: IScrapingService) => void,
+  callback: (scrapingService: IScrapingService) => Promise<void>,
 ): Promise<void> {
   const databaseService = container.get<IDatabaseService>(
     TYPES.IDatabaseService,
@@ -84,7 +84,9 @@ async function bootstrap(
     await databaseService.openConnection();
     const scrapingService = container.resolve(ScrapingService);
 
-    callback(scrapingService);
+    console.log('before callback')
+    await callback(scrapingService);
+    console.log('after callback')
 
     process.on('SIGINT', async () => {
       await databaseService.closeConnection();
