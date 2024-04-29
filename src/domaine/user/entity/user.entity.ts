@@ -28,7 +28,7 @@ export class User {
 
 
     @ManyToMany((type) => User, (user) => user.followers, {
-        //cascade: ['insert', 'update'],
+        cascade: ['insert', 'update'],
         //cascade: true,
       })
       @JoinTable({

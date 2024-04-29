@@ -46,9 +46,48 @@ export class UserService implements IUserService {
     }
   }
 
+  async findUsersWithAtLeastOneHobby(): Promise<User[]> {
+    try {
+        const users = await this.userRepository.createQueryBuilder("user")
+            .innerJoinAndSelect("user.hobbies", "hobby") // Utilise innerJoin pour garantir la présence de hobbies
+            .groupBy("user.id") // Regroupe les résultats par utilisateur
+            .having("COUNT(hobby.id) > 0") // S'assure que chaque utilisateur a au moins un hobby
+            .getMany();
+
+        return users;
+    } catch (error) {
+        console.error('Error fetching users with at least one hobby:', error);
+        return []; // Retourne un tableau vide en cas d'erreur
+    }
+}
+
+async findUsersWithSpecificHobbies(hobbiesList: string[]): Promise<User[]> {
+  try {
+      const users = await this.userRepository.createQueryBuilder("user")
+          .innerJoinAndSelect("user.hobbies", "hobby")
+          .where("hobby.name IN (:...hobbies)", { hobbies: hobbiesList }) // Filtrage basé sur les noms de hobbies
+          .groupBy("user.id")
+          .having("COUNT(hobby.id) > 0")
+          .getMany();
+
+      return users;
+  } catch (error) {
+      console.error('Error fetching users with specific hobbies:', error);
+      return []; // Retourne un tableau vide en cas d'erreur
+  }
+}
+
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
   }
+
+  async findAllWithNoInfo(): Promise<User[]> {
+    return this.userRepository.find({
+        where: {
+            hasInfo: false
+        }
+    });
+}
 
   async addFollowers(id: string, followers: UserDto[]) {
     await this.userRepository
