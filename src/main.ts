@@ -1,50 +1,90 @@
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
-
-import { UserService } from './domaine/user/service/user.service';
-import { Database } from 'sqlite3';
-import { DatabaseService } from './database/service/database.service';
-import container from './core/container.core';
-import { TYPES } from './core/type.core';
+import { program, Option } from 'commander';
 import { IDatabaseService } from './database/interface/idatabase.service';
-import { IUserService } from './domaine/user/interface/iuser.service';
-import { HobbyService } from './domaine/hobby/service/hobby.service';
 import { ScrapingService } from './scraping/service/scraping.service';
+import { IScrapingService } from './scraping/interface/iscraping.service';
+import { TYPES } from './core/type.core';
+import container from './core/container.core';
 
 dotenv.config();
 
-async function bootstrap(): Promise<void> {
+program
+  .command('scrap-info')
+  .description('scrap user information and save to database')
+  .option('-u, --users [value...]', 'user or list of user to process')
+  .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
+  .option('-f, --force', 'force processing')
+  .action(async (options) => {
+    console.log('scrap-info')
+    console.log(options)
+    await bootstrap((scrapingService) => {
+      scrapingService.getAllInfos(
+        options.force ?? false,
+        options.cookie,
+         options.users,
+      );
+    });
+  });
+
+program
+  .command('scrap-follow')
+  .description('scrap follower and following and save to database')
+  .option('-u, --users [value...]', 'user or list of user to process')
+  .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
+  .option('-f, --force', 'force processing')
+  .action(async (options) => {
+    console.log('scrap-follow')
+    console.log(options)
+    await bootstrap((scrapingService) => {
+      scrapingService.getAllFollow(
+        options.force ?? false,
+        options.cookie,
+        options.users,
+      );
+    });
+  });
+
+program
+  .command('add-hobby')
+  .description('add hobby and bind to users')
+  .requiredOption(
+    '-u, --users [value...]',
+    'user or list of user to bind with hoobies',
+  )
+  .requiredOption(
+    '-h, --hobbies [value...]',
+    'hobby or list of hobbies to bind with users',
+  )
+  .action(async (options) => {
+    console.log('add-hobby')
+    console.log(options)
+    await bootstrap((scrapingService) => {
+      scrapingService.applyHobbies(options.hobbies, options.users);
+    });
+  });
+
+program
+.addOption(new Option('--db_dir <type>', 'database directory').env('DATABASE_DIR'))
+.addOption(new Option('--db_name <type>', 'database name').env('DATABASE_NAME'))
+.addOption(new Option('--cookie_dir <type>', 'cookies json files directory').env('COOKIES_JSON_DIR'))
+.addOption(new Option('--base_url <type>', 'base url of scraping site').env('BASE_SCRAPING_URL'))
+.addOption(new Option('--env <type>', 'dev or prod').env('NODE_ENV'))
+.version('0.0.1', '-v, --vers', 'output the current version')
+;
+program.parse(process.argv);
+
+async function bootstrap(
+  callback: (scrapingService: IScrapingService) => void,
+): Promise<void> {
   const databaseService = container.get<IDatabaseService>(
     TYPES.IDatabaseService,
   );
   try {
     await databaseService.openConnection();
-    const userService = container.get<IUserService>(TYPES.IUserService);
-    const hobbyService = container.resolve(HobbyService);
     const scrapingService = container.resolve(ScrapingService);
 
-    /*await userService.save({ id: 'ttonyramses' });
-    await userService.save({ id: 'jacob_pio' });
-    await userService.save({ id: 'followings_user_1' });
-    await userService.addFollowers('ttonyramses', [{ id: 'jacob_pio' }]);
-    await userService.addFollowers('ttonyramses', [
-      { id: 'followings_user_1' },
-    ]);
-
-    let hobby = await hobbyService.findOneHobbyByName('chretien');
-    if(!hobby){
-      hobby = await hobbyService.save({ name: 'chretien' });
-    }
-    await userService.addHobbies('ttonyramses', [hobby]);
-
-    const users = await userService.findAll();
-
-    const user_tony = await userService.findOneUserWithRelations('ttonyramses');
-
-    console.log('users = ', users);
-    console.log('user_tony = ', user_tony);*/
-
-    await scrapingService.getAllFollow(true, 'cookies.json', [], []);
+    callback(scrapingService);
 
     process.on('SIGINT', async () => {
       await databaseService.closeConnection();
@@ -57,5 +97,3 @@ async function bootstrap(): Promise<void> {
     await databaseService.closeConnection();
   }
 }
-
-bootstrap();

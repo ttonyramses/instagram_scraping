@@ -145,7 +145,7 @@ export class ScrapingService implements IScrapingService {
     // Autoriser les notifications
     const cookies = (
       await import(process.env.COOKIES_JSON_DIR + '/' + cookiesFileName)
-    ).default;
+    );
     await context.grantPermissions(['notifications'], {
       origin: this.baseUrl,
     });
