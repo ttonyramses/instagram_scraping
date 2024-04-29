@@ -8,6 +8,9 @@ export interface IUserService {
   findOneUser(id: string): Promise<User>;
   findOneUserWithRelations(id: string): Promise<User>;
   findAll(): Promise<User[]>;
+  findAllWithNoInfo(): Promise<User[]>;
+  findUsersWithAtLeastOneHobby(): Promise<User[]>;
+  findUsersWithSpecificHobbies(hobbiesList: string[]): Promise<User[]>;
   addFollowers(id: string, followers: UserDto[]);
   addFollowings(id: string, followings: UserDto[]);
   addHobbies(id: string, hobbies: HobbyDto[]);

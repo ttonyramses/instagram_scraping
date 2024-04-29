@@ -23,7 +23,7 @@ async function bootstrap(): Promise<void> {
     const hobbyService = container.resolve(HobbyService);
     const scrapingService = container.resolve(ScrapingService);
 
-    await userService.save({ id: 'ttonyramses' });
+    /*await userService.save({ id: 'ttonyramses' });
     await userService.save({ id: 'jacob_pio' });
     await userService.save({ id: 'followings_user_1' });
     await userService.addFollowers('ttonyramses', [{ id: 'jacob_pio' }]);
@@ -42,9 +42,9 @@ async function bootstrap(): Promise<void> {
     const user_tony = await userService.findOneUserWithRelations('ttonyramses');
 
     console.log('users = ', users);
-    console.log('user_tony = ', user_tony);
+    console.log('user_tony = ', user_tony);*/
 
-    await scrapingService.getOneInfos('ttonyramses', false, 'cookies.json');
+    await scrapingService.getAllFollow(true, 'cookies.json', [], []);
 
     process.on('SIGINT', async () => {
       await databaseService.closeConnection();
