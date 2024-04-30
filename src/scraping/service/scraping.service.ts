@@ -63,6 +63,7 @@ export class ScrapingService implements IScrapingService {
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
           console.log('user ' + pseudo + 'not found ');
+          continue;
         }
         if (user.hasInfo && !force) {
         console.log(
@@ -70,6 +71,7 @@ export class ScrapingService implements IScrapingService {
           pseudo +
           ' sont déjà présentes dans la base de données',
         );
+        continue;
       } else {
         const userDto = await this.getInfoUserOnPage(pseudo);
         await this.userService.save(userDto);
@@ -85,9 +87,6 @@ export class ScrapingService implements IScrapingService {
       
     }
     await this.closeBrowser();
-
-  
-    
   }
 
 
@@ -103,7 +102,7 @@ export class ScrapingService implements IScrapingService {
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
           console.log('user ' + pseudo + 'not found ');
-          return;
+          continue;
         }
         if (user.hasProcess && !force) {
         console.log(
@@ -111,7 +110,7 @@ export class ScrapingService implements IScrapingService {
             user.id +
             ' sont déjà présentes dans la base de données',
           );
-        return;
+        continue;
       } else {
         await this.getFollowersOfUser(pseudo);
         await this.getFollowingsOfUser(pseudo);
@@ -131,7 +130,7 @@ export class ScrapingService implements IScrapingService {
             user.id +
             ' sont déjà présentes dans la base de données',
           );
-          return;
+          continue;
         } else {
           await this.getFollowersOfUser(user.id);
           await this.getFollowingsOfUser(user.id);
@@ -150,7 +149,7 @@ export class ScrapingService implements IScrapingService {
             user.id +
             ' sont déjà présentes dans la base de données',
           );
-          return;
+          continue;
         } else {
           await this.getFollowersOfUser(user.id);
           await this.getFollowingsOfUser(user.id);
