@@ -165,7 +165,7 @@ export class ScrapingService implements IScrapingService {
   }
 
   private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
-    this.browser = await chromium.launch({ headless: true }); // Mode non headless pour visualiser le défilement
+    this.browser = await chromium.launch({ headless: false }); // Mode non headless pour visualiser le défilement
     const context: BrowserContext = await this.browser.newContext();
 
     // Autoriser les notifications
