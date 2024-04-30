@@ -24,7 +24,16 @@ export class ScrapingService implements IScrapingService {
   async applyHobbies(hobbies: string[], pseudos: string[]): Promise<void> {
     const hobbies_list = []
     for(const hobby of hobbies){
-     const hob = await this.hobbyService.findOneHobbyByName(hobby);
+      const hob = await this.hobbyService.findOneHobbyByName(hobby.trim().toUpperCase());
+      if(!hob){
+        const hobDto = new HobbyDto;
+        hobDto.name = hobby.trim().toUpperCase();
+        await this.hobbyService.save(hobDto);
+      }
+     }
+
+    for(const hobby of hobbies){
+     const hob = await this.hobbyService.findOneHobbyByName(hobby.trim().toUpperCase());
       hobbies_list.push(hob)
     }
     const hobbiesDto = hobbies_list.map(hob => {
