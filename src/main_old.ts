@@ -44,11 +44,11 @@ async function bootstrap(): Promise<void> {
     console.log('users = ', users);
     console.log('user_tony = ', user_tony);*/
 
-    await scrapingService.getAllFollow(true, 'cookies.json', [], []);
+    await scrapingService.getAllFollow(true, ['chretien'], ['jeunesse_et_vie__rouen']);
 
-    process.on('SIGINT', async () => {
+    /*process.on('SIGINT', async () => {
       await databaseService.closeConnection();
-    });
+    });*/
   } catch (err) {
     console.log('=================================================');
     console.log(err);
