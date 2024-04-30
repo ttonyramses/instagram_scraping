@@ -29,6 +29,7 @@ program
   .command('scrap-follow')
   .description('scrap follower and following and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
+  .option('-hb, --hobbies [value...]','hobby or list of hobbies to bind with users',)
   .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
@@ -36,6 +37,7 @@ program
       await scrapingService.getAllFollow(
         options.force ?? false,
         options.cookie,
+        options.hobbies,
         options.users,
       );
     });
@@ -49,7 +51,7 @@ program
     'user or list of user to bind with hoobies',
   )
   .requiredOption(
-    '-h, --hobbies [value...]',
+    '-hb, --hobbies [value...]',
     'hobby or list of hobbies to bind with users',
   )
   .action(async (options) => {

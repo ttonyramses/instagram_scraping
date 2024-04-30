@@ -61,8 +61,6 @@ export class ScrapingService implements IScrapingService {
     if (pseudoList && pseudoList.length > 0) {
       for(const pseudo of pseudoList){
         const user = await this.userService.findOneUser(pseudo);
-        console.log('user =', user);
-        console.log('force =', force);
         if (!user) {
           console.log('user ' + pseudo + 'not found ');
         }
@@ -103,8 +101,6 @@ export class ScrapingService implements IScrapingService {
     if (pseudoList && pseudoList.length > 0) {
       for(const pseudo of pseudoList){
         const user = await this.userService.findOneUser(pseudo);
-        console.log('user =', user);
-        console.log('force =', force);
         if (!user) {
           console.log('user ' + pseudo + 'not found ');
           return;
@@ -170,7 +166,7 @@ export class ScrapingService implements IScrapingService {
   }
 
   private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
-    this.browser = await chromium.launch({ headless: false }); // Mode non headless pour visualiser le défilement
+    this.browser = await chromium.launch({ headless: true }); // Mode non headless pour visualiser le défilement
     const context: BrowserContext = await this.browser.newContext();
 
     // Autoriser les notifications
@@ -178,7 +174,6 @@ export class ScrapingService implements IScrapingService {
       await import(process.env.COOKIES_JSON_DIR + '/' + cookiesFileName)
     );
 
-    console.log(cookies)
     await context.grantPermissions(['notifications'], {
       origin: this.baseUrl,
     });
@@ -188,7 +183,6 @@ export class ScrapingService implements IScrapingService {
     await context.addCookies(cookies);
 
     const newUrl = this.baseUrl + (suiteUrl ? suiteUrl : '');
-    console.log('newUrl = ', newUrl);
     await this.page.goto(newUrl); // Remplacez par l'URL désirée
   }
 
@@ -325,7 +319,6 @@ export class ScrapingService implements IScrapingService {
     // Vérifiez si le bouton est visible et cliquez dessus
     if (await buttonLocator.isVisible()) {
         await buttonLocator.click();
-        console.info(`Clic effectué sur le bouton.`);
     } else {
         console.log(`Le bouton n'a pas été trouvé ou n'est pas visible sur la page.`);
     }

@@ -12,7 +12,7 @@ export const appDataSource = new DataSource({
   type: 'sqlite',
   database: `${process.env.DATABASE_DIR}/${process.env.DATABASE_NAME}.sqlite3`,
   synchronize: true,
-  logging: true,
+  logging: false,
   entities: [ __dirname + '/../domaine/**/entity/*.entity{.ts,.js}'],
 });
 export default appDataSource
