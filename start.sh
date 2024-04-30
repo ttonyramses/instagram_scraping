@@ -17,7 +17,7 @@ cd "$(dirname "$0")"
 
 # Lancer le fichier main.js s'il existe
 if [ -f "dist/main.js" ]; then
-    node dist/main.js
+    node dist/main.js $@
 else
     echo "Le fichier dist/main.js n'existe pas dans ce répertoire."
 fi

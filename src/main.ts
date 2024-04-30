@@ -16,8 +16,6 @@ program
   .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
-    console.log('scrap-info')
-    console.log(options)
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllInfos(
         options.force ?? false,
@@ -34,8 +32,6 @@ program
   .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
-    console.log('scrap-follow')
-    console.log(options)
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllFollow(
         options.force ?? false,
@@ -57,8 +53,6 @@ program
     'hobby or list of hobbies to bind with users',
   )
   .action(async (options) => {
-    console.log('add-hobby')
-    console.log(options)
     await bootstrap(async (scrapingService) => {
       await scrapingService.applyHobbies(options.hobbies, options.users);
     });
@@ -83,16 +77,11 @@ async function bootstrap(
   try {
     await databaseService.openConnection();
     const scrapingService = container.resolve(ScrapingService);
-
-    console.log('before callback')
     await callback(scrapingService);
-    console.log('after callback')
-
     process.on('SIGINT', async () => {
       await databaseService.closeConnection();
     });
   } catch (err) {
-    console.log('=================================================');
     console.log(err);
     await databaseService.closeConnection();
   } finally {
