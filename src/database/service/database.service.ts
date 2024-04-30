@@ -7,7 +7,7 @@ import appDataSource from '../datasource.config';
 
 @injectable()
 export class DatabaseService implements IDatabaseService {
-  private myDataSource: DataSource;
+  private myDataSource!: DataSource;
   constructor(@inject(TYPES.Logger) private readonly logger: Logger) {
     console.log("DatabaseService constructor #####################################################");
   }

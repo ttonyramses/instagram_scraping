@@ -2,6 +2,8 @@ import { inject, injectable } from 'inversify';
 import { IScrapingService } from '../interface/iscraping.service';
 import { TYPES } from '../../core/type.core';
 import { IUserService } from '../../domaine/user/interface/iuser.service';
+import { IHobbyService } from '../../domaine/hobby/interface/ihobby.service';
+import { HobbyDto } from '../../domaine/hobby/dto/hobby.dto';
 import { Browser, BrowserContext, Page, chromium } from 'playwright';
 import { UserDto } from '../../domaine/user/dto/user.dto';
 
@@ -14,12 +16,34 @@ export class ScrapingService implements IScrapingService {
 
   constructor(
     @inject(TYPES.IUserService) private readonly userService: IUserService,
+    @inject(TYPES.IHobbyService) private readonly hobbyService: IHobbyService,
   ) {
     this.baseUrl = process.env.BASE_SCRAPING_URL;
   }
 
   async applyHobbies(hobbies: string[], pseudos: string[]): Promise<void> {
-    throw new Error('Method not implemented.');
+    const hobbies_list = []
+    for(const hobby of hobbies){
+     const hob = await this.hobbyService.findOneHobbyByName(hobby);
+      hobbies_list.push(hob)
+    }
+    const hobbiesDto = hobbies_list.map(hob => {
+      const hobby = new HobbyDto();
+      hobby.id = hob.id;
+      hobby.name = hob.name;
+      return hobby;
+  });
+    for(const pseudo of pseudos){
+      const user = await this.userService.findOneUser(pseudo);
+      if (!user) {
+        console.log('user ' + pseudo + 'not found ');
+      }
+      else{
+        await this.userService.addHobbies(pseudo, hobbiesDto)
+        console.log('hobbies added to' + pseudo );
+      }
+    }
+    
   }
 
 
@@ -32,7 +56,6 @@ export class ScrapingService implements IScrapingService {
         console.log('force =', force);
         if (!user) {
           console.log('user ' + pseudo + 'not found ');
-          return;
         }
         if (user.hasInfo && !force) {
         console.log(
@@ -40,7 +63,6 @@ export class ScrapingService implements IScrapingService {
           pseudo +
           ' sont déjà présentes dans la base de données',
         );
-        return;
       } else {
         const userDto = await this.getInfoUserOnPage(pseudo);
         await this.userService.save(userDto);
@@ -145,7 +167,9 @@ export class ScrapingService implements IScrapingService {
     // Autoriser les notifications
     const cookies = (
       await import(process.env.COOKIES_JSON_DIR + '/' + cookiesFileName)
-    ).default;
+    );
+
+    console.log(cookies)
     await context.grantPermissions(['notifications'], {
       origin: this.baseUrl,
     });
