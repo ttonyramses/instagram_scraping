@@ -6,6 +6,7 @@ import { ScrapingService } from './scraping/service/scraping.service';
 import { IScrapingService } from './scraping/interface/iscraping.service';
 import { TYPES } from './core/type.core';
 import container from './core/container.core';
+import { Logger } from './logger/service/logger.service';
 
 program
   .command('scrap-info')
@@ -75,6 +76,10 @@ async function bootstrap(
   const databaseService = container.get<IDatabaseService>(
     TYPES.IDatabaseService,
   );
+  const logger = container.get<Logger>(
+    TYPES.Logger,
+  );
+
   try {
     await databaseService.openConnection();
     const scrapingService = container.resolve(ScrapingService);
@@ -83,7 +88,7 @@ async function bootstrap(
       await databaseService.closeConnection();
     });
   } catch (err) {
-    console.log(err);
+    logger.error('main error ', err);
     await databaseService.closeConnection();
   } finally {
     await databaseService.closeConnection();

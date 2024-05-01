@@ -14,7 +14,6 @@ import { Logger } from 'winston';
 export class ScrapingService implements IScrapingService {
   private page: Page;
   private browser: Browser;
-  private isBrowserInitialized: boolean = false;
   private baseUrl: string;
   private waitAfterActionLong: number
   private waitAfterActionShort: number
@@ -228,6 +227,9 @@ export class ScrapingService implements IScrapingService {
     if (typeof input !== 'string') {
       throw new Error('Input must be a string');
     }
+
+    // Retirer les espaces pour gérer les formats comme "1 256"
+    input = input.replace(/\s+/g, '');
 
     // Déterminer si le dernier caractère est une lettre indiquant un multiplicateur
     const suffix = input.slice(-1);

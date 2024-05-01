@@ -6,12 +6,16 @@ import { IUserService } from '../interface/iuser.service';
 import { IDatabaseService } from '../../../database/interface/idatabase.service';
 import { TYPES } from '../../../core/type.core';
 import { HobbyDto } from '../../hobby/dto/hobby.dto';
+import { Logger } from 'src/logger/service/logger.service';
 
 @injectable()
 export class UserService implements IUserService {
   private userRepository: Repository<User>;
 
-  constructor( @inject(TYPES.IDatabaseService) private readonly database: IDatabaseService ) {
+  constructor(
+    @inject(TYPES.IDatabaseService) private readonly database: IDatabaseService,
+    @inject(TYPES.Logger) private readonly logger: Logger,
+  ) {
     this.userRepository = database.getRepository(User);
   }
 
@@ -30,7 +34,7 @@ export class UserService implements IUserService {
       });
       return user;
     } catch (error) {
-      console.log(error);
+      this.logger.error('findOneUser', error);
     }
   }
 
@@ -38,44 +42,46 @@ export class UserService implements IUserService {
     try {
       const user = await this.userRepository.findOneOrFail({
         where: { id: id },
-        relations: ['followers','followings', 'hobbies'],
+        relations: ['followers', 'followings', 'hobbies'],
       });
       return user;
     } catch (error) {
-      console.log(error);
+      this.logger.error('findOneUserWithRelations error', error);
     }
   }
 
   async findUsersWithAtLeastOneHobby(): Promise<User[]> {
     try {
-        const users = await this.userRepository.createQueryBuilder("user")
-            .innerJoinAndSelect("user.hobbies", "hobby") // Utilise innerJoin pour garantir la présence de hobbies
-            .groupBy("user.id") // Regroupe les résultats par utilisateur
-            .having("COUNT(hobby.id) > 0") // S'assure que chaque utilisateur a au moins un hobby
-            .getMany();
-
-        return users;
-    } catch (error) {
-        console.error('Error fetching users with at least one hobby:', error);
-        return []; // Retourne un tableau vide en cas d'erreur
-    }
-}
-
-async findUsersWithSpecificHobbies(hobbiesList: string[]): Promise<User[]> {
-  try {
-      const users = await this.userRepository.createQueryBuilder("user")
-          .innerJoinAndSelect("user.hobbies", "hobby")
-          .where("hobby.name IN (:...hobbies)", { hobbies: hobbiesList }) // Filtrage basé sur les noms de hobbies
-          .groupBy("user.id")
-          .having("COUNT(hobby.id) > 0")
-          .getMany();
+      const users = await this.userRepository
+        .createQueryBuilder('user')
+        .innerJoinAndSelect('user.hobbies', 'hobby') // Utilise innerJoin pour garantir la présence de hobbies
+        .groupBy('user.id') // Regroupe les résultats par utilisateur
+        .having('COUNT(hobby.id) > 0') // S'assure que chaque utilisateur a au moins un hobby
+        .getMany();
 
       return users;
-  } catch (error) {
-      console.error('Error fetching users with specific hobbies:', error);
+    } catch (error) {
+      this.logger.error('findUsersWithAtLeastOneHobby Error fetching users with at least one hobby:', error);
       return []; // Retourne un tableau vide en cas d'erreur
+    }
   }
-}
+
+  async findUsersWithSpecificHobbies(hobbiesList: string[]): Promise<User[]> {
+    try {
+      const users = await this.userRepository
+        .createQueryBuilder('user')
+        .innerJoinAndSelect('user.hobbies', 'hobby')
+        .where('hobby.name IN (:...hobbies)', { hobbies: hobbiesList }) // Filtrage basé sur les noms de hobbies
+        .groupBy('user.id')
+        .having('COUNT(hobby.id) > 0')
+        .getMany();
+
+      return users;
+    } catch (error) {
+      this.logger.error('findUsersWithSpecificHobbies Error fetching users with specific hobbies:', error);
+      return []; // Retourne un tableau vide en cas d'erreur
+    }
+  }
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find();
@@ -83,20 +89,20 @@ async findUsersWithSpecificHobbies(hobbiesList: string[]): Promise<User[]> {
 
   async findAllWithNoInfo(): Promise<User[]> {
     return this.userRepository.find({
-        where: {
-            hasInfo: false
-        }
+      where: {
+        hasInfo: false,
+      },
     });
-}
+  }
 
   async addFollowers(id: string, followers: UserDto[]) {
     await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followers')
       .of(id)
-      .remove((followers ?? []));
+      .remove(followers ?? []);
 
-      await this.userRepository
+    await this.userRepository
       .createQueryBuilder()
       .relation(User, 'followers')
       .of(id)
