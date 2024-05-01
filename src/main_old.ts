@@ -44,7 +44,7 @@ async function bootstrap(): Promise<void> {
     console.log('users = ', users);
     console.log('user_tony = ', user_tony);*/
 
-    await scrapingService.applyHobbies(['rouen'], ['jeunesse_et_vie__rouen']);
+    await scrapingService.getAllFollow(false, 'cookies.json',['rouen'], []);
 
     /*process.on('SIGINT', async () => {
       await databaseService.closeConnection();

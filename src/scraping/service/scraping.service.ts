@@ -45,7 +45,7 @@ export class ScrapingService implements IScrapingService {
     for(const pseudo of pseudos){
       const user = await this.userService.findOneUser(pseudo);
       if (!user) {
-        console.log('user ' + pseudo + 'not found ');
+        console.log('user ' + pseudo + ' not found ');
       }
       else{
         await this.userService.addHobbies(pseudo, hobbiesDto)
@@ -62,7 +62,7 @@ export class ScrapingService implements IScrapingService {
       for(const pseudo of pseudoList){
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
-          console.log('user ' + pseudo + 'not found ');
+          console.log('user ' + pseudo + ' not found ');
           continue;
         }
         if (user.hasInfo && !force) {
@@ -101,7 +101,7 @@ export class ScrapingService implements IScrapingService {
       for(const pseudo of pseudoList){
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
-          console.log('user ' + pseudo + 'not found ');
+          console.log('user ' + pseudo + ' not found ');
           continue;
         }
         if (user.hasProcess && !force) {
@@ -165,7 +165,7 @@ export class ScrapingService implements IScrapingService {
   }
 
   private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
-    this.browser = await chromium.launch({ headless: true }); // Mode non headless pour visualiser le défilement
+    this.browser = await chromium.launch({ headless: false }); // Mode non headless pour visualiser le défilement
     const context: BrowserContext = await this.browser.newContext();
 
     // Autoriser les notifications
@@ -193,6 +193,9 @@ export class ScrapingService implements IScrapingService {
     if (typeof input !== 'string') {
         throw new Error("Input must be a string");
     }
+
+    // Retirer les espaces pour gérer les formats comme "1 256"
+    input = input.replace(/\s+/g, '');
 
     // Déterminer si le dernier caractère est une lettre indiquant un multiplicateur
     const suffix = input.slice(-1);
@@ -251,16 +254,25 @@ export class ScrapingService implements IScrapingService {
         .first()
         .textContent(),
     );
-
+    try {
     user.name = await this.page
       .locator('main.xvbhtw8 header.x1qjc9v5 section div.x7a106z span.x1lliihq')
       .first()
-      .textContent();
+      .textContent({ timeout: 2000 });
+    } catch (error) {
+      user.name = "Null";
+  }
 
-    user.biography = await this.page
-      .locator('main.xvbhtw8 header.x1qjc9v5 section div.x7a106z h1')
-      .first()
-      .textContent();
+      try {
+        const biographyContent = await this.page
+            .locator('main.xvbhtw8 header.x1qjc9v5 section div.x7a106z h1')
+            .first()
+            .textContent({ timeout: 2000 });
+    
+        user.biography = biographyContent || "Not have biography";
+    } catch (error) {
+        user.biography = "Not have biography";
+    }
 
     user.hasInfo = true;
 
