@@ -9,12 +9,9 @@ import appDataSource from '../datasource.config';
 export class DatabaseService implements IDatabaseService {
   private myDataSource!: DataSource;
   constructor(@inject(TYPES.Logger) private readonly logger: Logger) {
-    console.log("DatabaseService constructor #####################################################");
   }
 
-  public async openConnection(): Promise<void> {
-    console.log("openConnection #####################################################");
-    
+  public async openConnection(): Promise<void> {    
     if (this.myDataSource?.isInitialized) {
       this.logger.info('Connection Already Established!');
       console.log('Connection Already Established!');
@@ -22,10 +19,8 @@ export class DatabaseService implements IDatabaseService {
       try {
         this.myDataSource = await appDataSource.initialize();
         this.logger.info('Connection Established!');
-        console.log('Connection Established!');
       } catch (error) {
         this.logger.error(`Connection Failed. Error: ${error}`);
-        console.log(`Connection Failed. Error: ${error}`);
       }
     }
   }
@@ -34,10 +29,8 @@ export class DatabaseService implements IDatabaseService {
     if (this.myDataSource?.isInitialized) {
       this.myDataSource.destroy();
       this.logger.info('Connection Closed!');
-      console.log('Connection Closed');
     } else {
       this.logger.info('Connection Already Closed!');
-      console.log('Connection Already Closed!');
     }
   }
 

@@ -7,8 +7,6 @@ import { IScrapingService } from './scraping/interface/iscraping.service';
 import { TYPES } from './core/type.core';
 import container from './core/container.core';
 
-dotenv.config();
-
 program
   .command('scrap-info')
   .description('scrap user information and save to database')
@@ -29,6 +27,7 @@ program
   .command('scrap-follow')
   .description('scrap follower and following and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
+  .option('-hb, --hobbies [value...]','hobby or list of hobbies to bind with users',)
   .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
@@ -36,6 +35,7 @@ program
       await scrapingService.getAllFollow(
         options.force ?? false,
         options.cookie,
+        options.hobbies,
         options.users,
       );
     });
@@ -49,7 +49,7 @@ program
     'user or list of user to bind with hoobies',
   )
   .requiredOption(
-    '-h, --hobbies [value...]',
+    '-hb, --hobbies [value...]',
     'hobby or list of hobbies to bind with users',
   )
   .action(async (options) => {
@@ -59,14 +59,15 @@ program
   });
 
 program
-.addOption(new Option('--db_dir <type>', 'database directory').env('DATABASE_DIR'))
-.addOption(new Option('--db_name <type>', 'database name').env('DATABASE_NAME'))
-.addOption(new Option('--cookie_dir <type>', 'cookies json files directory').env('COOKIES_JSON_DIR'))
-.addOption(new Option('--base_url <type>', 'base url of scraping site').env('BASE_SCRAPING_URL'))
-.addOption(new Option('--env <type>', 'dev or prod').env('NODE_ENV'))
+// .addOption(new Option('--db_dir <type>', 'database directory').env('DATABASE_DIR'))
+// .addOption(new Option('--db_name <type>', 'database name').env('DATABASE_NAME'))
+// .addOption(new Option('--cookie_dir <type>', 'cookies json files directory').env('COOKIES_JSON_DIR'))
+// .addOption(new Option('--base_url <type>', 'base url of scraping site').env('BASE_SCRAPING_URL'))
+// .addOption(new Option('--env <type>', 'dev or prod').env('NODE_ENV'))
 .version('0.0.1', '-v, --vers', 'output the current version')
 ;
 program.parse(process.argv);
+dotenv.config();
 
 async function bootstrap(
   callback: (scrapingService: IScrapingService) => Promise<void>,
