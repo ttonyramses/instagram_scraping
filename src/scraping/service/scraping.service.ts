@@ -126,7 +126,7 @@ export class ScrapingService implements IScrapingService {
   }
     else{
       if(hobbies && hobbies.length > 0){
-        const users =  await this.userService.findUsersWithSpecificHobbies(hobbies);
+        const users =  await this.userService.findUsersWithSpecificHobbies(hobbies.map(hobby => hobby.trim().toUpperCase()));
 
         for(const user of users){
           if (user.hasProcess && !force) {
