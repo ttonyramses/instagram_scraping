@@ -6,6 +6,9 @@ import { IHobbyService } from '../../domaine/hobby/interface/ihobby.service';
 import { HobbyDto } from '../../domaine/hobby/dto/hobby.dto';
 import { Browser, BrowserContext, Page, chromium } from 'playwright';
 import { UserDto } from '../../domaine/user/dto/user.dto';
+import browserConfig from '../config/browser.config';
+import selectorConfig from '../config/selector.config';
+import { Logger } from 'winston';
 
 @injectable()
 export class ScrapingService implements IScrapingService {
@@ -13,164 +16,195 @@ export class ScrapingService implements IScrapingService {
   private browser: Browser;
   private isBrowserInitialized: boolean = false;
   private baseUrl: string;
+  private waitAfterActionLong: number
+  private waitAfterActionShort: number
+  
 
   constructor(
     @inject(TYPES.IUserService) private readonly userService: IUserService,
     @inject(TYPES.IHobbyService) private readonly hobbyService: IHobbyService,
+    @inject(TYPES.Logger) private readonly logger: Logger,
   ) {
     this.baseUrl = process.env.BASE_SCRAPING_URL;
+    this.waitAfterActionLong = parseInt(process.env.WAIT_AFTER_ACTION_LONG)
+    this.waitAfterActionShort = parseInt(process.env.WAIT_AFTER_ACTION_SHORT)
   }
 
   async applyHobbies(hobbies: string[], pseudos: string[]): Promise<void> {
-    const hobbies_list = []
-    for(const hobby of hobbies){
-      const hob = await this.hobbyService.findOneHobbyByName(hobby.trim().toUpperCase());
-      if(!hob){
-        const hobDto = new HobbyDto;
+    const hobbies_list = [];
+    for (const hobby of hobbies) {
+      const hob = await this.hobbyService.findOneHobbyByName(
+        hobby.trim().toUpperCase(),
+      );
+      if (!hob) {
+        const hobDto = new HobbyDto();
         hobDto.name = hobby.trim().toUpperCase();
         await this.hobbyService.save(hobDto);
       }
-     }
-
-    for(const hobby of hobbies){
-     const hob = await this.hobbyService.findOneHobbyByName(hobby.trim().toUpperCase());
-      hobbies_list.push(hob)
     }
-    const hobbiesDto = hobbies_list.map(hob => {
+
+    for (const hobby of hobbies) {
+      const hob = await this.hobbyService.findOneHobbyByName(
+        hobby.trim().toUpperCase(),
+      );
+      hobbies_list.push(hob);
+    }
+    const hobbiesDto = hobbies_list.map((hob) => {
       const hobby = new HobbyDto();
       hobby.id = hob.id;
       hobby.name = hob.name;
       return hobby;
-  });
-    for(const pseudo of pseudos){
+    });
+    for (const pseudo of pseudos) {
       const user = await this.userService.findOneUser(pseudo);
       if (!user) {
-        console.log('user ' + pseudo + 'not found ');
-      }
-      else{
-        await this.userService.addHobbies(pseudo, hobbiesDto)
-        console.log('hobbies added to' + pseudo );
+        this.logger.info('user ' + pseudo + 'not found ');
+      } else {
+        await this.userService.addHobbies(pseudo, hobbiesDto);
+        this.logger.info('hobbies added to' + pseudo);
       }
     }
-    
   }
 
-
-  async getAllInfos( force: boolean, cookiesFileName: string, pseudoList?: string[]): Promise<void> {
+  async getAllInfos(
+    force: boolean,
+    cookiesFileName: string,
+    pseudoList?: string[],
+  ): Promise<void> {
     await this.initBrowser('/', cookiesFileName);
     if (pseudoList && pseudoList.length > 0) {
-      for(const pseudo of pseudoList){
+      for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
-          console.log('user ' + pseudo + 'not found ');
+          this.logger.info('user ' + pseudo + 'not found ');
           continue;
         }
         if (user.hasInfo && !force) {
-        console.log(
-        'Les information de ' +
-          pseudo +
-          ' sont déjà présentes dans la base de données',
-        );
-        continue;
-      } else {
-        const userDto = await this.getInfoUserOnPage(pseudo);
-        await this.userService.save(userDto);
+          this.logger.info(
+            'Les information de ' +
+              pseudo +
+              ' sont déjà présentes dans la base de données',
+          );
+          continue;
+        } else {
+          const userDto = await this.getInfoUserOnPage(pseudo);
+          await this.userService.save(userDto);
+        }
       }
-    }
-  }
-    else{
-      const users = force ? await this.userService.findAll() : await this.userService.findAllWithNoInfo();
-      for(const user of users){
+    } else {
+      const users = force
+        ? await this.userService.findAll()
+        : await this.userService.findAllWithNoInfo();
+      for (const user of users) {
         const userDto = await this.getInfoUserOnPage(user.id);
         await this.userService.save(userDto);
       }
-      
     }
     await this.closeBrowser();
   }
-
 
   async getAllFollow(
     force: boolean,
     cookiesFileName: string,
     hobbies?: string[],
-    pseudoList?: string[]
+    pseudoList?: string[],
   ): Promise<void> {
     await this.initBrowser('/', cookiesFileName);
     if (pseudoList && pseudoList.length > 0) {
-      for(const pseudo of pseudoList){
+      for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
-          console.log('user ' + pseudo + 'not found ');
+          this.logger.info('user ' + pseudo + 'not found ');
           continue;
         }
         if (user.hasProcess && !force) {
-        console.log(
-          'Les followers de ' +
-            user.id +
-            ' sont déjà présentes dans la base de données',
+          this.logger.info(
+            'Les followers de ' +
+              user.id +
+              ' sont déjà présentes dans la base de données',
           );
-        continue;
+          continue;
+        } else {
+          try {
+            await this.page.goto(this.baseUrl + '/' + user.id, {
+              waitUntil: 'networkidle',
+            });
+               await this.getFollowOfUser(user.id, Follow.FOLLOWER);
+               await this.getFollowOfUser(user.id, Follow.FOLLOWING);
+               user.hasProcess = true;
+            await this.userService.save(user);
+          } catch (error) {
+            this.logger.error('getAllFollow', error);
+          }
+        }
+      }
+    } else {
+      if (hobbies && hobbies.length > 0) {
+        const users =
+          await this.userService.findUsersWithSpecificHobbies(hobbies);
+
+        for (const user of users) {
+          if (user.hasProcess && !force) {
+            this.logger.info(
+              'Les followers de ' +
+                user.id +
+                ' sont déjà présentes dans la base de données',
+            );
+            continue;
+          } else {
+            try {
+              await this.page.goto(this.baseUrl + '/' + user.id, {
+                waitUntil: 'networkidle',
+              });
+              await this.getFollowOfUser(user.id, Follow.FOLLOWER);
+              await this.getFollowOfUser(user.id, Follow.FOLLOWING);
+              user.hasProcess = true;
+              await this.userService.save(user);
+            } catch (error) {
+              this.logger.error('getAllFollow', error);
+            }
+          }
+        }
       } else {
-        await this.getFollowersOfUser(pseudo);
-        await this.getFollowingsOfUser(pseudo);
-        user.hasProcess = true;
-        await this.userService.save(user);
-      }
-    }
-  }
-    else{
-      if(hobbies && hobbies.length > 0){
-        const users =  await this.userService.findUsersWithSpecificHobbies(hobbies);
-
-        for(const user of users){
-          if (user.hasProcess && !force) {
-          console.log(
-          'Les followers de ' +
-            user.id +
-            ' sont déjà présentes dans la base de données',
-          );
-          continue;
-        } else {
-          await this.getFollowersOfUser(user.id);
-          await this.getFollowingsOfUser(user.id);
-          user.hasProcess = true;
-          await this.userService.save(user);
-        }
-      }
-
-      }
-      else{
         const users = await this.userService.findUsersWithAtLeastOneHobby();
-        for(const user of users){
+        for (const user of users) {
           if (user.hasProcess && !force) {
-          console.log(
-          'Les followers de ' +
-            user.id +
-            ' sont déjà présentes dans la base de données',
-          );
-          continue;
-        } else {
-          await this.getFollowersOfUser(user.id);
-          await this.getFollowingsOfUser(user.id);
-          user.hasProcess = true;
-          await this.userService.save(user);
+            this.logger.info(
+              'Les followers de ' +
+                user.id +
+                ' sont déjà présentes dans la base de données',
+            );
+            continue;
+          } else {
+            try {
+              await this.page.goto(this.baseUrl + '/' + user.id, {
+                waitUntil: 'networkidle',
+              });
+              await this.getFollowOfUser(user.id, Follow.FOLLOWER);
+              await this.getFollowOfUser(user.id, Follow.FOLLOWING);
+             user.hasProcess = true;
+              await this.userService.save(user);
+            } catch (error) {
+              this.logger.error('getAllFollow', error);
+            }
+          }
         }
       }
-
-      }
-      
     }
     await this.closeBrowser();
   }
 
   private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
-    this.browser = await chromium.launch({ headless: true }); // Mode non headless pour visualiser le défilement
+    this.browser = await chromium.launch(browserConfig);
     const context: BrowserContext = await this.browser.newContext();
+    context.setDefaultTimeout(parseInt(process.env.SELECTOR_TIMEOUT));
+    context.setDefaultNavigationTimeout(
+      parseInt(process.env.NAVIGATION_TIMEOUT),
+    );
 
     // Autoriser les notifications
-    const cookies = (
-      await import(process.env.COOKIES_JSON_DIR + '/' + cookiesFileName)
+    const cookies = await import(
+      process.env.COOKIES_JSON_DIR + '/' + cookiesFileName
     );
 
     await context.grantPermissions(['notifications'], {
@@ -183,6 +217,7 @@ export class ScrapingService implements IScrapingService {
 
     const newUrl = this.baseUrl + (suiteUrl ? suiteUrl : '');
     await this.page.goto(newUrl); // Remplacez par l'URL désirée
+    this.logger.info('Lancement du navigateur OK');
   }
 
   private async closeBrowser() {
@@ -191,13 +226,13 @@ export class ScrapingService implements IScrapingService {
 
   private async parseNumberFromString(input: string): Promise<number | null> {
     if (typeof input !== 'string') {
-        throw new Error("Input must be a string");
+      throw new Error('Input must be a string');
     }
 
     // Déterminer si le dernier caractère est une lettre indiquant un multiplicateur
     const suffix = input.slice(-1);
     const isMultiplier = isNaN(parseInt(suffix));
-    
+
     // Préparer la partie numérique de la chaîne en fonction de la présence d'un multiplicateur
     let numberPart = isMultiplier ? input.slice(0, -1) : input;
     numberPart = numberPart.replace(',', '.');
@@ -207,353 +242,251 @@ export class ScrapingService implements IScrapingService {
 
     // Déterminer le multiplicateur basé sur le suffixe, si c'est un multiplicateur
     if (isMultiplier) {
-        switch (suffix.toUpperCase()) {
-            case 'K':
-                return value * 1000;
-            case 'M':
-                return value * 1000000;
-            case 'B':
-                return value * 1000000000;
-            default:
-                // Si le suffixe n'est pas reconnu comme un multiplicateur valide
-                return isNaN(value) ? null : value;
-        }
+      switch (suffix.toUpperCase()) {
+        case 'K':
+          return value * 1000;
+        case 'M':
+          return value * 1000000;
+        case 'B':
+          return value * 1000000000;
+        default:
+          // Si le suffixe n'est pas reconnu comme un multiplicateur valide
+          return isNaN(value) ? null : value;
+      }
     }
 
     // Si aucun suffixe n'est présent, retourner simplement la valeur numérique
     return isNaN(value) ? null : value;
-}
+  }
 
   private async getInfoUserOnPage(pseudo: string): Promise<UserDto> {
     const user = new UserDto();
-    const url = this.baseUrl + '/' + pseudo
+    const url = this.baseUrl + '/' + pseudo;
     await this.page.goto(url);
-    await this.sleep(1_000);
-    user.id = await this.page
-      .locator('main.xvbhtw8 header.x1qjc9v5 section div.x9f619')
-      .first()
-      .textContent();
+    await this.sleep(this.waitAfterActionShort);
+    user.id = pseudo;
 
-    user.nbFollowers = await this.parseNumberFromString(
-      await this.page
-        .locator(
-          'main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(2) span._ac2a',
-        )
+    try {
+      user.nbFollowers = await this.parseNumberFromString(
+        await this.page
+          .locator(selectorConfig.pageInfo.nbFollowers)
+          .first()
+          .textContent(),
+      );
+    } catch (error) {
+      this.logger.error(
+        pseudo +
+          " : impossible d'effectuer le selecteur '" +
+          selectorConfig.pageInfo.nbFollowers +
+          "'",
+      );
+    }
+
+    try {
+      const nbFollowingString = await this.page
+        .locator(selectorConfig.pageInfo.nbFollowing)
         .first()
-        .textContent(),
-    );
+        .textContent();
+      user.nbFollowing = await this.parseNumberFromString(nbFollowingString);
+    } catch (error) {
+      this.logger.error(
+        pseudo +
+          " : impossible d'effectuer le selecteur '" +
+          selectorConfig.pageInfo.nbFollowing +
+          "'",
+      );
+    }
 
-    user.nbFollowing = await this.parseNumberFromString(
-      await this.page
-        .locator(
-          'main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(3) span._ac2a',
-        )
+    try {
+      user.name = await this.page
+        .locator(selectorConfig.pageInfo.name)
         .first()
-        .textContent(),
-    );
+        .textContent();
+    } catch (error) {
+      this.logger.error(
+        pseudo +
+          " : impossible d'effectuer le selecteur '" +
+          selectorConfig.pageInfo.name +
+          "'",
+      );
+    }
 
-    user.name = await this.page
-      .locator('main.xvbhtw8 header.x1qjc9v5 section div.x7a106z span.x1lliihq')
-      .first()
-      .textContent();
-
-    user.biography = await this.page
-      .locator('main.xvbhtw8 header.x1qjc9v5 section div.x7a106z h1')
-      .first()
-      .textContent();
-
+    try {
+      user.biography = await this.page
+        .locator(selectorConfig.pageInfo.biography)
+        .first()
+        .textContent();
+    } catch (error) {
+      this.logger.error(
+        pseudo +
+          " : impossible d'effectuer le selecteur '" +
+          selectorConfig.pageInfo.biography +
+          "'",
+      );
+    }
     user.hasInfo = true;
-
     return user;
   }
 
-  private async scroll(){
-    for (let i = 0; i < 3; i++){
-
+  private async scroll() {
+    for (let i = 0; i < 3; i++) {
       await this.page.mouse.wheel(0, 600);
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
+      await this.sleep(this.waitAfterActionShort);
+    }
   }
-}
 
-  private async addFollowers(pseudo, userIds){
-
-    const users = userIds.map(id => {
+  private async addFollowers(pseudo, userIds) {
+    const users = userIds.map((id) => {
       const user = new UserDto();
       user.id = id;
       return user;
-  });
+    });
 
-  await this.userService.saveAll(users);
-  await this.userService.addFollowers(pseudo, users)
-
-
+    await this.userService.saveAll(users);
+    await this.userService.addFollowers(pseudo, users);
   }
 
-  private async addFollowings(pseudo, userIds){
-
-    const users = userIds.map(id => {
+  private async addFollowings(pseudo, userIds) {
+    const users = userIds.map((id) => {
       const user = new UserDto();
       user.id = id;
       return user;
-  });
+    });
 
-  await this.userService.saveAll(users);
-  await this.userService.addFollowings(pseudo, users)
-
-
+    await this.userService.saveAll(users);
+    await this.userService.addFollowings(pseudo, users);
   }
- 
 
-  private async getFollowersOfUser(pseudo: string) {
+  private async getFollowOfUser(pseudo: string, follow:Follow) {
 
-    const url = this.baseUrl + '/' + pseudo
-    await this.page.goto(url);
-    await this.sleep(1_000);
-    await this.page.waitForLoadState('networkidle');
-    // Utilisez page.locator pour cibler le bouton plus précisément
-    const buttonLocator = this.page.locator('main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(2) a.x1i10hfl'); // Remplacez 'button#monBouton' par le sélecteur correct
-
-    // Vérifiez si le bouton est visible et cliquez dessus
-    if (await buttonLocator.isVisible()) {
-        await buttonLocator.click();
+    let buttonFollow
+    if(follow === Follow.FOLLOWER){
+      buttonFollow = selectorConfig.pageInfo.buttonFollower
     } else {
-        console.log(`Le bouton n'a pas été trouvé ou n'est pas visible sur la page.`);
+      buttonFollow = selectorConfig.pageInfo.buttonFollowing
+    }
+    // Utilisez page.locator pour cibler le bouton plus précisément
+    try {
+      const buttonFollowLocator = await this.page.waitForSelector(
+        buttonFollow,
+        { state: 'attached' },
+      );
+      // Vérifiez si le bouton est visible et cliquez dessus
+      if (await buttonFollowLocator.isVisible()) {
+        await buttonFollowLocator.click();
+      } else {
+        this.logger.info(
+          "Le bouton follow n'a pas été trouvé ou n'est pas visible sur la page.",
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        pseudo +
+          " : impossible d'effectuer le selecteur '" +
+          buttonFollow +
+          "'",
+      );
     }
 
-
     // Créer un locator pour l'élément que vous souhaitez faire défiler dans la vue
-    const elementLocator = this.page.locator('div.x1ja2u2z div.x7r02ix div div._aano div:nth-child(1) div:nth-child(5)').first();
+    const listView = await this.page.waitForSelector(
+      selectorConfig.popupFollow.listView,
+      { state: 'attached' },
+    );
 
-    const all_element = this.page.locator('div.x1ja2u2z div.x7r02ix div div._aano div:nth-child(1)').first();
-
-
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Pause de 5 secondes
-
+    await this.sleep(this.waitAfterActionLong);
 
     // Positionnez la souris sur l'élément
-    await elementLocator.hover();
+    await listView.hover();
 
     // Faire défiler la page vers le bas de 600 pixels
     await this.scroll();
 
-    await this.sleep(5_000);
-    
+    await this.sleep(this.waitAfterActionLong);
+
     //await this.page.waitForLoadState('networkidle');
 
-    let usersShow = await this.page.locator('div.x1ja2u2z div.x7r02ix div div._aano div:nth-child(1) div.x1dm5mii span._ap3a')
+    let usersShow = this.page.locator(
+      selectorConfig.popupFollow.nameWithoutIndice,
+    );
+    let nbUsersShow = await usersShow.count();
+    this.logger.debug('nbUsersShow = ' + nbUsersShow);
+    let startIndice = 0;
+    let nbGet = 0;
+    do {
+      const endIndice = nbUsersShow;
+      const usersNames = [];
 
-    let nbUsersShow = await usersShow.count()
-
-    let nbGet = 0
-
-    console.info('nombre element =' + nbUsersShow);
-
-    const usersNames = []
-
-    await this.scroll();
-    await this.scroll();
-
-    let last_get = 10
-    for (let i = 0; i < last_get; i++) {
-        const selector = this.page.locator(`div.x1ja2u2z div.x7r02ix div div._aano div:nth-child(1) div.x1dm5mii:nth-of-type(${i+1}) span._ap3a`).first()
-        const text = await selector.textContent()
-        usersNames.push(text)
-    }
-
-    await this.addFollowers(pseudo, usersNames)
-
-    nbGet += usersNames.length;
-
-
-    await elementLocator.hover();
-
-    await this.scroll();
-    await this.scroll();
-    await this.scroll();
-
-    await this.sleep(5_000);
-     
-    await this.page.waitForLoadState('networkidle');
-
-
-    nbUsersShow = await usersShow.count()
-     
-
-
-
-    while (last_get < nbUsersShow) {
-
-        const final = last_get
-        const usersNames = []
-
-        nbUsersShow = await usersShow.count()
-
-        if((nbUsersShow-last_get)>15){
-            last_get += 15
+      for (let i = startIndice; i < endIndice; i++) {
+        try {
+          const pseudoFollowingSelector = await this.page.waitForSelector(
+            selectorConfig.popupFollow.nameWithIndice.replace(
+              '$indice',
+              (i + 1).toString(),
+            ),
+            { state: 'attached' },
+          );
+          const text = await pseudoFollowingSelector.textContent();
+          usersNames.push(text);
+        } catch (error) {
+          this.logger.error('pseudoFollowSelector error', error);
         }
-        else{
-            last_get = last_get + (nbUsersShow-last_get)
-        }
-
-        for (let i = final; i < last_get; i++) {
-            const selector = this.page.locator(`div.x1ja2u2z div.x7r02ix div div._aano div:nth-child(1) div.x1dm5mii:nth-of-type(${i+1}) span._ap3a`).first()
-            const text = await selector.textContent()
-            usersNames.push(text)
-            
-        }
-
-        await this.addFollowers(pseudo, usersNames)
-
-        nbGet += usersNames.length;
-
-        console.log('Nombre de followers récupérés' + nbGet);
-            console.log('Nombre afficher' + nbUsersShow);
-
-     // Faire défiler la page vers le bas de 600 pixels
-
-     nbUsersShow = await usersShow.count()
-     console.log('Nombre afficher' + nbUsersShow);
-     await this.scroll(); 
-     await this.sleep(5_000);   
-    }
-
-    console.log('Nombre de followers récupérés' + nbGet);
-
-    //console.log('Dernier Followers' +users_pseupo[users_pseupo.length -1]);
-
-    console.info('Scrolled to bottom of the specified element.');
-}
-
-private async getFollowingsOfUser(pseudo: string) {
-
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-    
-  await this.page.mouse.move(100, 100);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  await this.page.mouse.click(100, 100);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  await this.sleep(1_000);
-  await this.page.waitForLoadState('networkidle');
-  // Utilisez page.locator pour cibler le bouton plus précisément
-  const buttonLocator = this.page.locator('main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(3) a.x1i10hfl'); // Remplacez 'button#monBouton' par le sélecteur correct
-
-  // Vérifiez si le bouton est visible et cliquez dessus
-  if (await buttonLocator.isVisible()) {
-      await buttonLocator.click();
-      console.info(`Clic effectué sur le bouton.`);
-  } else {
-      console.log(`Le bouton n'a pas été trouvé ou n'est pas visible sur la page.`);
-  }
-
-
-  // Créer un locator pour l'élément que vous souhaitez faire défiler dans la vue
-  const elementLocator = this.page.locator('div.x1qjc9v5 div._aano').first();
-
-  const all_element = this.page.locator('div.x1qjc9v5 div._aano div:nth-child(1)').first();
-
-
-  await new Promise(resolve => setTimeout(resolve, 1000)); // Pause de 5 secondes
-
-
-  // Positionnez la souris sur l'élément
-  await elementLocator.hover();
-
-  // Faire défiler la page vers le bas de 600 pixels
-  await this.scroll();
-
-  await this.sleep(5_000);
-  
-  //await this.page.waitForLoadState('networkidle');
-
-  let usersShow = await this.page.locator('div.x1qjc9v5 div._aano div:nth-child(1) div.x1dm5mii span._ap3a')
-
-  let nbUsersShow = await usersShow.count()
-
-  let nbGet = 0
-
-  console.info('nombre element =' + nbUsersShow);
-
-  const usersNames = []
-
-  await this.scroll();
-  await this.scroll();
-
-  let last_get = 10
-  for (let i = 0; i < last_get; i++) {
-      const selector = this.page.locator(`div.x1qjc9v5 div._aano div:nth-child(1) div.x1dm5mii:nth-of-type(${i+1}) span._ap3a`).first()
-      const text = await selector.textContent()
-      usersNames.push(text)
-  }
-
-  await this.addFollowings(pseudo, usersNames)
-
-  nbGet += usersNames.length;
-
-
-  await elementLocator.hover();
-
-  await this.scroll();
-  await this.scroll();
-  await this.scroll();
-
-  await this.sleep(5_000);
-   
-  await this.page.waitForLoadState('networkidle');
-
-
-  nbUsersShow = await usersShow.count()
-   
-
-
-
-  while (last_get < nbUsersShow) {
-
-      const final = last_get
-      const usersNames = []
-
-      nbUsersShow = await usersShow.count()
-
-      if((nbUsersShow-last_get)>15){
-          last_get += 15
-      }
-      else{
-          last_get = last_get + (nbUsersShow-last_get)
       }
 
-      for (let i = final; i < last_get; i++) {
-          const selector = this.page.locator(`div.x1qjc9v5 div._aano div:nth-child(1) div.x1dm5mii:nth-of-type(${i+1}) span._ap3a`).first()
-          const text = await selector.textContent()
-          usersNames.push(text)
-          
+      if(follow == Follow.FOLLOWER){
+        await this.addFollowers(pseudo, usersNames);
+      }else{
+        await this.addFollowings(pseudo, usersNames);
       }
-
-      await this.addFollowings(pseudo, usersNames)
 
       nbGet += usersNames.length;
 
-      console.log('Nombre de followers récupérés' + nbGet);
-          console.log('Nombre afficher' + nbUsersShow);
+      if(follow == Follow.FOLLOWER){
+        this.logger.debug('Nombre de followers récupérés ' + nbGet);
+      }else{
+        this.logger.debug('Nombre de followings récupérés ' + nbGet);
+      }
+      this.logger.debug('Nombre affiche ' + nbUsersShow);
 
-   // Faire défiler la page vers le bas de 600 pixels
+      // Faire défiler la page vers le bas de 600 pixels
+      let retry = 0;
+      do {
+        retry++;
+        await this.scroll();
+        await this.sleep(this.waitAfterActionLong);
+        //await this.page.waitForLoadState('networkidle');
+        nbUsersShow = await usersShow.count();
+      } while (nbUsersShow <= endIndice && retry < 2);
 
-   nbUsersShow = await usersShow.count()
-   console.log('Nombre afficher' + nbUsersShow);
-   await this.scroll(); 
-   await this.sleep(5_000);   
-  }
+      startIndice = endIndice;
+      this.logger.debug('nbUsersShow = ' + nbUsersShow);
+      this.logger.debug('startIndice = ' + startIndice);
+    } while (startIndice < nbUsersShow);
 
-  console.log('Nombre de followings récupérés' + nbGet);
+    await this.page.mouse.move(100, 100);
+    await this.sleep(this.waitAfterActionShort);
+    await this.page.mouse.click(100, 100);
+    await this.sleep(this.waitAfterActionShort);
+    //await this.page.waitForLoadState('networkidle');
 
-  //console.log('Dernier Followers' +users_pseupo[users_pseupo.length -1]);
-
-  console.info('Scrolled to bottom of the specified element.');
+    if(follow == Follow.FOLLOWER){
+      this.logger.info('Nombre de followers récupérés ' + nbGet);
+    }else{
+      this.logger.info('Nombre de followings récupérés ' + nbGet);
+    }
 }
 
-
-  private async sleep(time: number): Promise<void> {
-    await setTimeout(() => {}, time);
+  private sleep(timeMilliSeconde: number): Promise<void> {
+    return new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve(); // Résoudre la promesse après le délai spécifié
+      }, timeMilliSeconde);
+    });
   }
+}
+
+enum Follow {
+  FOLLOWER,
+  FOLLOWING
 }

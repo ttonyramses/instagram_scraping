@@ -13,14 +13,13 @@ export class DatabaseService implements IDatabaseService {
 
   public async openConnection(): Promise<void> {    
     if (this.myDataSource?.isInitialized) {
-      this.logger.info('Connection Already Established!');
-      console.log('Connection Already Established!');
+      this.logger.info('Database Connection Already Established!');
     } else {
       try {
         this.myDataSource = await appDataSource.initialize();
-        this.logger.info('Connection Established!');
+        this.logger.info('Database Connection Established!');
       } catch (error) {
-        this.logger.error(`Connection Failed. Error: ${error}`);
+        this.logger.error(`Database Connection Failed. Error: ${error}`);
       }
     }
   }
@@ -28,9 +27,9 @@ export class DatabaseService implements IDatabaseService {
   public async closeConnection(): Promise<void> {
     if (this.myDataSource?.isInitialized) {
       this.myDataSource.destroy();
-      this.logger.info('Connection Closed!');
+      this.logger.info('Database Connection Closed!');
     } else {
-      this.logger.info('Connection Already Closed!');
+      this.logger.info('Database Connection Already Closed!');
     }
   }
 

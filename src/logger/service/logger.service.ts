@@ -9,6 +9,7 @@ import {
 
 @injectable()
 export class Logger {
+  private logDirectory: string;
   private customLevels = {
     levels: {
       trace: 5,
@@ -31,13 +32,35 @@ export class Logger {
   private logger: LoggerWinston;
 
   constructor() {
+    this.logDirectory = process.env.LOG_DIR || 'logs_toto';
     this.logger = createLogger({
-      transports: [new transports.Console()],
+      format: format.combine(
+        format.timestamp(),
+        format.printf((info) => {
+          return `[${info.timestamp}] [${info.level}]: ${info.message} ${info.slat ? info.slat : ''}`;
+        }),
+      ),
+      transports: [
+        new transports.Console(),
+        new transports.File({
+          filename: this.logDirectory+'/instagram_scraping_error.log',
+          level: 'error',
+        }),
+        new transports.File({
+          filename: this.logDirectory+'/instagram_scraping_activity.log',
+          level: 'info',
+        }),
+      ],
+      level: 'info',
     });
   }
 
   public info(msg: any, meta?: any) {
     this.logger.info(msg, meta);
+  }
+
+  public debug(msg: any, meta?: any) {
+    this.logger.debug(msg, meta);
   }
 
   public warn(msg: any, meta?: any) {
