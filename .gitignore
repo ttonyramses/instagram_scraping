@@ -6,5 +6,5 @@ tmp/
 temp/
 .db
 dist/
-logs
+logs/
 .env

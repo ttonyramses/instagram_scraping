@@ -21,9 +21,13 @@ export class ScrapingService implements IScrapingService {
     @inject(TYPES.IHobbyService) private readonly hobbyService: IHobbyService,
     @inject(TYPES.Logger) private readonly logger: Logger,
   ) {
-    this.baseUrl = process.env.BASE_SCRAPING_URL;
-    this.waitAfterActionLong = parseInt(process.env.WAIT_AFTER_ACTION_LONG);
-    this.waitAfterActionShort = parseInt(process.env.WAIT_AFTER_ACTION_SHORT);
+    this.baseUrl = process.env.BASE_SCRAPING_URL || 'https://www.instagram.com';
+    this.waitAfterActionLong = parseInt(
+      process.env.WAIT_AFTER_ACTION_LONG || '2000',
+    );
+    this.waitAfterActionShort = parseInt(
+      process.env.WAIT_AFTER_ACTION_SHORT || '500',
+    );
   }
 
   async applyHobbies(hobbies: string[], pseudos: string[]): Promise<void> {
@@ -212,16 +216,18 @@ export class ScrapingService implements IScrapingService {
 
   private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
     this.browser = await chromium.launch({
-      headless: process.env.HEADLESS === 'true',
+      headless: (process.env.HEADLESS || 'true') === 'true',
     });
     const context: BrowserContext = await this.browser.newContext();
-    context.setDefaultTimeout(parseInt(process.env.SELECTOR_TIMEOUT));
+    context.setDefaultTimeout(parseInt(process.env.SELECTOR_TIMEOUT || '5000'));
     context.setDefaultNavigationTimeout(
-      parseInt(process.env.NAVIGATION_TIMEOUT),
+      parseInt(process.env.NAVIGATION_TIMEOUT || '60000'),
     );
 
     const cookies = await import(
-      process.env.COOKIES_JSON_DIR + '/' + cookiesFileName
+      (process.env.COOKIES_JSON_DIR || '../../../.cookies') +
+        '/' +
+        cookiesFileName
     );
 
     // Autoriser les notifications
@@ -291,7 +297,9 @@ export class ScrapingService implements IScrapingService {
     user.id = pseudo;
 
     const selectorConfig = await import(
-      process.env.SELECTORS_JSON_DIR + '/' + selectorsFileName
+      (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
+        '/' +
+        selectorsFileName
     );
 
     try {
@@ -391,8 +399,11 @@ export class ScrapingService implements IScrapingService {
     follow: Follow,
     selectorsFileName: string,
   ) {
+
     const selectorConfig = await import(
-      process.env.SELECTORS_JSON_DIR + '/' + selectorsFileName
+      (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
+        '/' +
+        selectorsFileName
     );
 
     let buttonFollow;
@@ -428,7 +439,8 @@ export class ScrapingService implements IScrapingService {
     //await this.sleep(this.waitAfterActionLong);
     await this.page.waitForLoadState('domcontentloaded');
 
-    const searchString = '0123456789abcdefghijklmnopqrstuvwxyz';
+    // const searchString = '0123456789abcdefghijklmnopqrstuvwxyz';
+    const searchString = 'abcdefghijklmnopqrstuvwxyz';
     let nbGet = 0;
     const pseudoSet = new Set();
     for (const caractere of searchString) {
@@ -488,6 +500,28 @@ export class ScrapingService implements IScrapingService {
               usersNames.push(text);
             }
             nbGet++;
+
+            if (
+              nbGet % parseInt(process.env.NB_FOLLOW_LOG_PROCESS || '1000') ==
+              0
+            ) {
+              if (follow == Follow.FOLLOWER) {
+                this.logger.info(
+                  'Nombre de followers traités ' + nbGet,
+                );
+                this.logger.info(
+                  'Nombre de followers récupérés ' + pseudoSet.size,
+                );
+              } else {
+                this.logger.info(
+                  'Nombre de followings traités ' + nbGet,
+                );
+                this.logger.info(
+                  'Nombre de followings récupérés ' + pseudoSet.size,
+                );
+              }
+            }
+            
           } catch (error) {
             this.logger.error('pseudoFollowSelector error', error);
           }
@@ -499,22 +533,7 @@ export class ScrapingService implements IScrapingService {
           await this.addFollowings(pseudo, usersNames);
         }
 
-        if (follow == Follow.FOLLOWER) {
-          this.logger.debug(
-            'Nombre approximatif de followers traités ' + nbGet,
-          );
-          this.logger.debug(
-            'Nombre approximatif de followers récupérés ' + pseudoSet.size,
-          );
-        } else {
-          this.logger.debug(
-            'Nombre approximatif de followings traités ' + nbGet,
-          );
-          this.logger.debug(
-            'Nombre approximatif de followings récupérés ' + pseudoSet.size,
-          );
-        }
-        this.logger.debug('Nombre affiche ' + nbUsersShow);
+        
 
         // Faire défiler la page vers le bas de 600 pixels
 
@@ -534,14 +553,14 @@ export class ScrapingService implements IScrapingService {
     await this.sleep(this.waitAfterActionShort);
 
     if (follow == Follow.FOLLOWER) {
-      this.logger.info('Nombre approximatif de followers traités ' + nbGet);
+      this.logger.info('Nombre de followers traités ' + nbGet);
       this.logger.info(
-        'Nombre approximatif de followers récupérés ' + pseudoSet.size,
+        'Nombre de followers récupérés ' + pseudoSet.size,
       );
     } else {
-      this.logger.info('Nombre approximatif de followings traités ' + nbGet);
+      this.logger.info('Nombre de followings traités ' + nbGet);
       this.logger.info(
-        'Nombre approximatif de followings récupérés ' + pseudoSet.size,
+        'Nombre de followings récupérés ' + pseudoSet.size,
       );
     }
   }

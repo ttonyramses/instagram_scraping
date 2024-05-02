@@ -31,7 +31,7 @@ export class Logger {
   private logger: LoggerWinston;
 
   constructor() {
-    this.logDirectory = process.env.LOG_DIR || 'logs_toto';
+    this.logDirectory = process.env.LOG_DIR || 'logs';
     this.logger = createLogger({
       format: format.combine(
         format.timestamp(),
@@ -49,10 +49,10 @@ export class Logger {
         }),
         new transports.File({
           filename: this.logDirectory+'/instagram_scraping_activity.log',
-          level: 'info',
+          level: process.env.LOG_LEVEL || 'info',
         }),
       ],
-      level: 'info',
+      level: process.env.LOG_LEVEL || 'info',
     });
   }
 

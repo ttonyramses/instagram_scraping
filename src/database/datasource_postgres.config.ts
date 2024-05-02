@@ -14,7 +14,7 @@ export const appDataSource = new DataSource({
   port: 15432,
   username: "postgres",
   password: "postgres",
-  database: `${process.env.DATABASE_NAME}`,
+  database: `${process.env.DATABASE_NAME || 'instagram_scraping_db'}`,
   synchronize: true,
   logging: false,
   entities: [__dirname + '/../domaine/**/entity/*.entity{.ts,.js}'],
