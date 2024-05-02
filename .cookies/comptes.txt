@@ -1,0 +1,18 @@
+mail: christ_intsta_evang_0001@yopmail.com
+pwd: pwd_christ_intsta_evang_0001
+pseudo: christ_intsta_evang_0001
+
+
+mail: christ_intsta_evang_0002@yopmail.com
+pwd: pwd_christ_intsta_evang_0002
+pseudo: christ_intsta_evang_0002
+
+
+mail: christ_intsta_evang_0003@yopmail.com
+pwd: pwd_christ_intsta_evang_0003
+pseudo: christ_intsta_evang_0004
+
+
+mail: christ_evang_0005@yopmail.com
+pwd: pwd_christ_evang_0005
+pseudo: christ_evang_0005

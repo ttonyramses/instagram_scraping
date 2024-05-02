@@ -6,7 +6,7 @@ import { IUserService } from '../interface/iuser.service';
 import { IDatabaseService } from '../../../database/interface/idatabase.service';
 import { TYPES } from '../../../core/type.core';
 import { HobbyDto } from '../../hobby/dto/hobby.dto';
-import { Logger } from 'src/logger/service/logger.service';
+import { Logger } from 'winston';
 
 @injectable()
 export class UserService implements IUserService {
@@ -29,7 +29,7 @@ export class UserService implements IUserService {
 
   async findOneUser(id: string): Promise<User> {
     try {
-      const user = await this.userRepository.findOneOrFail({
+      const user = await this.userRepository.findOne({
         where: { id: id },
       });
       return user;

@@ -1,0 +1,65 @@
+[
+    {
+        "name":"csrftoken",
+        "value":"MHAy6sHxQTvSNHw2C8B2vXXijQrj3K2Z",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"datr",
+        "value":"O-3lZbnf-UC7XIJF5_9Nqu1o",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"ds_user_id",
+        "value":"66004880783",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"ig_did",
+        "value":"4EDB7D33-83AB-4343-AB93-450CC341F024",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"mid",
+        "value":"ZeXtLwALAAFswgq-kV6w9QTJ5SkF",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"rur",
+        "value":"ODN\\05466004880783\\0541745482264:01f720314cecf23f278bbf0dbbbf8a83f0ca67000f341cca4f28a34198401e2ca4db9174",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"sessionid",
+        "value":"66004880783%3AiTBT4HwFIxd5pD%3A5%3AAYe7j2sx6acP_wh3GqK4qtb-7bV_51ChlALlXYU6OA",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"shbid",
+        "value":"11841\\05466004880783\\0541745481827:01f70557cd4582e222ee6909502147a0849aa0501bd1d3f8c31a15a9a9d5c37336ba1384",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"shbts",
+        "value":"1713945827\\05466004880783\\0541745481827:01f730bad4488cb0048d88b96016e0fefff34851519c74f55b2b153e299088ae481a5093",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    }
+]

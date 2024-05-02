@@ -28,7 +28,7 @@ export class HobbyService implements IHobbyService {
 
   async findOneHobby(id: number): Promise<Hobby> {
     try {
-      const hobby = await this.hobbyRepository.findOneOrFail({
+      const hobby = await this.hobbyRepository.findOne({
         where: { id: id },
       });
       return hobby;
@@ -39,7 +39,7 @@ export class HobbyService implements IHobbyService {
 
   async findOneHobbyByName(name: string): Promise<Hobby> {
     try {
-      const hobby = await this.hobbyRepository.findOneOrFail({
+      const hobby = await this.hobbyRepository.findOne({
         where: { name: name },
       });
       return hobby;

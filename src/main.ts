@@ -13,13 +13,15 @@ program
   .description('scrap user information and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
   .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
+  .option('-s, --selector <type>', 'file of selector in .json', 'selectors.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllInfos(
         options.force ?? false,
         options.cookie,
-         options.users,
+        options.selector,
+        options.users,
       );
     });
   });
@@ -28,14 +30,19 @@ program
   .command('scrap-follow')
   .description('scrap follower and following and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
-  .option('-hb, --hobbies [value...]','hobby or list of hobbies to bind with users',)
+  .option(
+    '-hb, --hobbies [value...]',
+    'hobby or list of hobbies to bind with users',
+  )
   .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
+  .option('-s, --selector <type>', 'file of selector in .json', 'selectors.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllFollow(
         options.force ?? false,
         options.cookie,
+        options.selector,
         options.hobbies,
         options.users,
       );
@@ -60,13 +67,12 @@ program
   });
 
 program
-// .addOption(new Option('--db_dir <type>', 'database directory').env('DATABASE_DIR'))
-// .addOption(new Option('--db_name <type>', 'database name').env('DATABASE_NAME'))
-// .addOption(new Option('--cookie_dir <type>', 'cookies json files directory').env('COOKIES_JSON_DIR'))
-// .addOption(new Option('--base_url <type>', 'base url of scraping site').env('BASE_SCRAPING_URL'))
-// .addOption(new Option('--env <type>', 'dev or prod').env('NODE_ENV'))
-.version('0.0.1', '-v, --vers', 'output the current version')
-;
+  // .addOption(new Option('--db_dir <type>', 'database directory').env('DATABASE_DIR'))
+  // .addOption(new Option('--db_name <type>', 'database name').env('DATABASE_NAME'))
+  // .addOption(new Option('--cookie_dir <type>', 'cookies json files directory').env('COOKIES_JSON_DIR'))
+  // .addOption(new Option('--base_url <type>', 'base url of scraping site').env('BASE_SCRAPING_URL'))
+  // .addOption(new Option('--env <type>', 'dev or prod').env('NODE_ENV'))
+  .version('0.0.1', '-v, --vers', 'output the current version');
 program.parse(process.argv);
 dotenv.config();
 
@@ -76,9 +82,7 @@ async function bootstrap(
   const databaseService = container.get<IDatabaseService>(
     TYPES.IDatabaseService,
   );
-  const logger = container.get<Logger>(
-    TYPES.Logger,
-  );
+  const logger = container.get<Logger>(TYPES.Logger);
 
   try {
     await databaseService.openConnection();

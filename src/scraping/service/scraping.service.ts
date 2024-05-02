@@ -6,8 +6,6 @@ import { IHobbyService } from '../../domaine/hobby/interface/ihobby.service';
 import { HobbyDto } from '../../domaine/hobby/dto/hobby.dto';
 import { Browser, BrowserContext, Page, chromium } from 'playwright';
 import { UserDto } from '../../domaine/user/dto/user.dto';
-import browserConfig from '../config/browser.config';
-import selectorConfig from '../config/selector.config';
 import { Logger } from 'winston';
 
 @injectable()
@@ -15,9 +13,8 @@ export class ScrapingService implements IScrapingService {
   private page: Page;
   private browser: Browser;
   private baseUrl: string;
-  private waitAfterActionLong: number
-  private waitAfterActionShort: number
-  
+  private waitAfterActionLong: number;
+  private waitAfterActionShort: number;
 
   constructor(
     @inject(TYPES.IUserService) private readonly userService: IUserService,
@@ -25,49 +22,38 @@ export class ScrapingService implements IScrapingService {
     @inject(TYPES.Logger) private readonly logger: Logger,
   ) {
     this.baseUrl = process.env.BASE_SCRAPING_URL;
-    this.waitAfterActionLong = parseInt(process.env.WAIT_AFTER_ACTION_LONG)
-    this.waitAfterActionShort = parseInt(process.env.WAIT_AFTER_ACTION_SHORT)
+    this.waitAfterActionLong = parseInt(process.env.WAIT_AFTER_ACTION_LONG);
+    this.waitAfterActionShort = parseInt(process.env.WAIT_AFTER_ACTION_SHORT);
   }
 
   async applyHobbies(hobbies: string[], pseudos: string[]): Promise<void> {
     const hobbies_list = [];
     for (const hobby of hobbies) {
-      const hob = await this.hobbyService.findOneHobbyByName(
+      let hob = await this.hobbyService.findOneHobbyByName(
         hobby.trim().toUpperCase(),
       );
       if (!hob) {
         const hobDto = new HobbyDto();
         hobDto.name = hobby.trim().toUpperCase();
-        await this.hobbyService.save(hobDto);
+        hob = await this.hobbyService.save(hobDto);
       }
+      hobbies_list.push({ id: hob.id } as HobbyDto);
     }
 
-    for (const hobby of hobbies) {
-      const hob = await this.hobbyService.findOneHobbyByName(
-        hobby.trim().toUpperCase(),
-      );
-      hobbies_list.push(hob);
-    }
-    const hobbiesDto = hobbies_list.map((hob) => {
-      const hobby = new HobbyDto();
-      hobby.id = hob.id;
-      hobby.name = hob.name;
-      return hobby;
-    });
     for (const pseudo of pseudos) {
-      const user = await this.userService.findOneUser(pseudo);
+      let user = await this.userService.findOneUser(pseudo);
       if (!user) {
-        this.logger.info('user ' + pseudo + 'not found ');
-      } else {
-        await this.userService.addHobbies(pseudo, hobbiesDto);
-        this.logger.info('hobbies added to' + pseudo);
+        await this.userService.save({ id: pseudo } as UserDto);
       }
+      await this.userService.addHobbies(pseudo, hobbies_list);
+      this.logger.info('hobbies added to ' + pseudo);
     }
   }
 
   async getAllInfos(
     force: boolean,
     cookiesFileName: string,
+    selectorsFileName: string,
     pseudoList?: string[],
   ): Promise<void> {
     await this.initBrowser('/', cookiesFileName);
@@ -75,7 +61,7 @@ export class ScrapingService implements IScrapingService {
       for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
-          this.logger.info('user ' + pseudo + 'not found ');
+          this.logger.info('user ' + pseudo + ' not found ');
           continue;
         }
         if (user.hasInfo && !force) {
@@ -86,7 +72,10 @@ export class ScrapingService implements IScrapingService {
           );
           continue;
         } else {
-          const userDto = await this.getInfoUserOnPage(pseudo);
+          const userDto = await this.getInfoUserOnPage(
+            pseudo,
+            selectorsFileName,
+          );
           await this.userService.save(userDto);
         }
       }
@@ -95,7 +84,10 @@ export class ScrapingService implements IScrapingService {
         ? await this.userService.findAll()
         : await this.userService.findAllWithNoInfo();
       for (const user of users) {
-        const userDto = await this.getInfoUserOnPage(user.id);
+        const userDto = await this.getInfoUserOnPage(
+          user.id,
+          selectorsFileName,
+        );
         await this.userService.save(userDto);
       }
     }
@@ -105,6 +97,7 @@ export class ScrapingService implements IScrapingService {
   async getAllFollow(
     force: boolean,
     cookiesFileName: string,
+    selectorsFileName: string,
     hobbies?: string[],
     pseudoList?: string[],
   ): Promise<void> {
@@ -113,7 +106,7 @@ export class ScrapingService implements IScrapingService {
       for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
         if (!user) {
-          this.logger.info('user ' + pseudo + 'not found ');
+          this.logger.info('user ' + pseudo + ' not found ');
           continue;
         }
         if (user.hasProcess && !force) {
@@ -128,9 +121,17 @@ export class ScrapingService implements IScrapingService {
             await this.page.goto(this.baseUrl + '/' + user.id, {
               waitUntil: 'networkidle',
             });
-               await this.getFollowOfUser(user.id, Follow.FOLLOWER);
-               await this.getFollowOfUser(user.id, Follow.FOLLOWING);
-               user.hasProcess = true;
+            await this.getFollowOfUser(
+              user.id,
+              Follow.FOLLOWER,
+              selectorsFileName,
+            );
+            await this.getFollowOfUser(
+              user.id,
+              Follow.FOLLOWING,
+              selectorsFileName,
+            );
+            user.hasProcess = true;
             await this.userService.save(user);
           } catch (error) {
             this.logger.error('getAllFollow', error);
@@ -155,8 +156,16 @@ export class ScrapingService implements IScrapingService {
               await this.page.goto(this.baseUrl + '/' + user.id, {
                 waitUntil: 'networkidle',
               });
-              await this.getFollowOfUser(user.id, Follow.FOLLOWER);
-              await this.getFollowOfUser(user.id, Follow.FOLLOWING);
+              await this.getFollowOfUser(
+                user.id,
+                Follow.FOLLOWER,
+                selectorsFileName,
+              );
+              await this.getFollowOfUser(
+                user.id,
+                Follow.FOLLOWING,
+                selectorsFileName,
+              );
               user.hasProcess = true;
               await this.userService.save(user);
             } catch (error) {
@@ -179,9 +188,17 @@ export class ScrapingService implements IScrapingService {
               await this.page.goto(this.baseUrl + '/' + user.id, {
                 waitUntil: 'networkidle',
               });
-              await this.getFollowOfUser(user.id, Follow.FOLLOWER);
-              await this.getFollowOfUser(user.id, Follow.FOLLOWING);
-             user.hasProcess = true;
+              await this.getFollowOfUser(
+                user.id,
+                Follow.FOLLOWER,
+                selectorsFileName,
+              );
+              await this.getFollowOfUser(
+                user.id,
+                Follow.FOLLOWING,
+                selectorsFileName,
+              );
+              user.hasProcess = true;
               await this.userService.save(user);
             } catch (error) {
               this.logger.error('getAllFollow', error);
@@ -194,18 +211,20 @@ export class ScrapingService implements IScrapingService {
   }
 
   private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
-    this.browser = await chromium.launch(browserConfig);
+    this.browser = await chromium.launch({
+      headless: process.env.HEADLESS === 'true',
+    });
     const context: BrowserContext = await this.browser.newContext();
     context.setDefaultTimeout(parseInt(process.env.SELECTOR_TIMEOUT));
     context.setDefaultNavigationTimeout(
       parseInt(process.env.NAVIGATION_TIMEOUT),
     );
 
-    // Autoriser les notifications
     const cookies = await import(
       process.env.COOKIES_JSON_DIR + '/' + cookiesFileName
     );
 
+    // Autoriser les notifications
     await context.grantPermissions(['notifications'], {
       origin: this.baseUrl,
     });
@@ -261,12 +280,19 @@ export class ScrapingService implements IScrapingService {
     return isNaN(value) ? null : value;
   }
 
-  private async getInfoUserOnPage(pseudo: string): Promise<UserDto> {
+  private async getInfoUserOnPage(
+    pseudo: string,
+    selectorsFileName: string,
+  ): Promise<UserDto> {
     const user = new UserDto();
     const url = this.baseUrl + '/' + pseudo;
     await this.page.goto(url);
     await this.sleep(this.waitAfterActionShort);
     user.id = pseudo;
+
+    const selectorConfig = await import(
+      process.env.SELECTORS_JSON_DIR + '/' + selectorsFileName
+    );
 
     try {
       user.nbFollowers = await this.parseNumberFromString(
@@ -360,13 +386,20 @@ export class ScrapingService implements IScrapingService {
     await this.userService.addFollowings(pseudo, users);
   }
 
-  private async getFollowOfUser(pseudo: string, follow:Follow) {
+  private async getFollowOfUser(
+    pseudo: string,
+    follow: Follow,
+    selectorsFileName: string,
+  ) {
+    const selectorConfig = await import(
+      process.env.SELECTORS_JSON_DIR + '/' + selectorsFileName
+    );
 
-    let buttonFollow
-    if(follow === Follow.FOLLOWER){
-      buttonFollow = selectorConfig.pageInfo.buttonFollower
+    let buttonFollow;
+    if (follow === Follow.FOLLOWER) {
+      buttonFollow = selectorConfig.pageInfo.buttonFollower;
     } else {
-      buttonFollow = selectorConfig.pageInfo.buttonFollowing
+      buttonFollow = selectorConfig.pageInfo.buttonFollowing;
     }
     // Utilisez page.locator pour cibler le bouton plus précisément
     try {
@@ -389,95 +422,129 @@ export class ScrapingService implements IScrapingService {
           buttonFollow +
           "'",
       );
+      return;
     }
 
-    // Créer un locator pour l'élément que vous souhaitez faire défiler dans la vue
-    const listView = await this.page.waitForSelector(
-      selectorConfig.popupFollow.listView,
-      { state: 'attached' },
-    );
+    //await this.sleep(this.waitAfterActionLong);
+    await this.page.waitForLoadState('domcontentloaded');
 
-    await this.sleep(this.waitAfterActionLong);
-
-    // Positionnez la souris sur l'élément
-    await listView.hover();
-
-    // Faire défiler la page vers le bas de 600 pixels
-    await this.scroll();
-
-    await this.sleep(this.waitAfterActionLong);
-
-    //await this.page.waitForLoadState('networkidle');
-
-    let usersShow = this.page.locator(
-      selectorConfig.popupFollow.nameWithoutIndice,
-    );
-    let nbUsersShow = await usersShow.count();
-    this.logger.debug('nbUsersShow = ' + nbUsersShow);
-    let startIndice = 0;
+    const searchString = '0123456789abcdefghijklmnopqrstuvwxyz';
     let nbGet = 0;
-    do {
-      const endIndice = nbUsersShow;
-      const usersNames = [];
+    const pseudoSet = new Set();
+    for (const caractere of searchString) {
+      // Créer un locator pour l'élément que vous souhaitez faire défiler dans la vue
 
-      for (let i = startIndice; i < endIndice; i++) {
-        try {
-          const pseudoFollowingSelector = await this.page.waitForSelector(
-            selectorConfig.popupFollow.nameWithIndice.replace(
-              '$indice',
-              (i + 1).toString(),
-            ),
-            { state: 'attached' },
-          );
-          const text = await pseudoFollowingSelector.textContent();
-          usersNames.push(text);
-        } catch (error) {
-          this.logger.error('pseudoFollowSelector error', error);
-        }
+      //saisie d'une caractère dans la bar de recherche
+      try {
+        // Sélectionnez l'élément input par son sélecteur CSS
+        const inputSearch = await this.page.waitForSelector(
+          selectorConfig.popupFollow.inputSearch,
+        );
+
+        // Saisissez du texte dans le champ d'entrée
+        await inputSearch.fill(caractere);
+      } catch (error) {
+        this.logger.error('PB lors de la saisie du caractère ' + caractere);
+        continue;
       }
+      //await this.sleep(this.waitAfterActionLong);
+      await this.page.waitForLoadState('domcontentloaded');
 
-      if(follow == Follow.FOLLOWER){
-        await this.addFollowers(pseudo, usersNames);
-      }else{
-        await this.addFollowings(pseudo, usersNames);
-      }
-
-      nbGet += usersNames.length;
-
-      if(follow == Follow.FOLLOWER){
-        this.logger.debug('Nombre de followers récupérés ' + nbGet);
-      }else{
-        this.logger.debug('Nombre de followings récupérés ' + nbGet);
-      }
-      this.logger.debug('Nombre affiche ' + nbUsersShow);
-
-      // Faire défiler la page vers le bas de 600 pixels
-      let retry = 0;
-      do {
-        retry++;
-        await this.scroll();
-        await this.sleep(this.waitAfterActionLong);
-        //await this.page.waitForLoadState('networkidle');
-        nbUsersShow = await usersShow.count();
-      } while (nbUsersShow <= endIndice && retry < 2);
-
-      startIndice = endIndice;
+      let usersShow = this.page.locator(
+        selectorConfig.popupFollow.nameWithoutIndice,
+      );
+      let nbUsersShow = await usersShow.count();
       this.logger.debug('nbUsersShow = ' + nbUsersShow);
-      this.logger.debug('startIndice = ' + startIndice);
-    } while (startIndice < nbUsersShow);
+      let startIndice = 0;
 
+      try {
+        const listView = await this.page.waitForSelector(
+          selectorConfig.popupFollow.listView,
+          { state: 'attached' },
+        );
+        // Positionnez la souris sur l'élément
+        await listView.hover();
+      } catch (error) {
+        this.logger.error('PB scrolling avec le caractère ' + caractere);
+        continue;
+      }
+
+      do {
+        const endIndice = nbUsersShow;
+        const usersNames = [];
+
+        for (let i = startIndice; i < endIndice; i++) {
+          try {
+            const pseudoFollowingSelector = await this.page.waitForSelector(
+              selectorConfig.popupFollow.nameWithIndice.replace(
+                '$indice',
+                (i + 1).toString(),
+              ),
+              { state: 'attached' },
+            );
+            const text = await pseudoFollowingSelector.textContent();
+            if (!pseudoSet.has(text)) {
+              pseudoSet.add(text);
+              usersNames.push(text);
+            }
+            nbGet++;
+          } catch (error) {
+            this.logger.error('pseudoFollowSelector error', error);
+          }
+        }
+
+        if (follow == Follow.FOLLOWER) {
+          await this.addFollowers(pseudo, usersNames);
+        } else {
+          await this.addFollowings(pseudo, usersNames);
+        }
+
+        if (follow == Follow.FOLLOWER) {
+          this.logger.debug(
+            'Nombre approximatif de followers traités ' + nbGet,
+          );
+          this.logger.debug(
+            'Nombre approximatif de followers récupérés ' + pseudoSet.size,
+          );
+        } else {
+          this.logger.debug(
+            'Nombre approximatif de followings traités ' + nbGet,
+          );
+          this.logger.debug(
+            'Nombre approximatif de followings récupérés ' + pseudoSet.size,
+          );
+        }
+        this.logger.debug('Nombre affiche ' + nbUsersShow);
+
+        // Faire défiler la page vers le bas de 600 pixels
+
+        await this.scroll();
+        //await this.sleep(this.waitAfterActionLong);
+        await this.page.waitForLoadState('domcontentloaded');
+        nbUsersShow = await usersShow.count();
+
+        startIndice = endIndice;
+        this.logger.debug('nbUsersShow = ' + nbUsersShow);
+        this.logger.debug('startIndice = ' + startIndice);
+      } while (startIndice < nbUsersShow);
+    }
     await this.page.mouse.move(100, 100);
     await this.sleep(this.waitAfterActionShort);
     await this.page.mouse.click(100, 100);
     await this.sleep(this.waitAfterActionShort);
-    //await this.page.waitForLoadState('networkidle');
 
-    if(follow == Follow.FOLLOWER){
-      this.logger.info('Nombre de followers récupérés ' + nbGet);
-    }else{
-      this.logger.info('Nombre de followings récupérés ' + nbGet);
+    if (follow == Follow.FOLLOWER) {
+      this.logger.info('Nombre approximatif de followers traités ' + nbGet);
+      this.logger.info(
+        'Nombre approximatif de followers récupérés ' + pseudoSet.size,
+      );
+    } else {
+      this.logger.info('Nombre approximatif de followings traités ' + nbGet);
+      this.logger.info(
+        'Nombre approximatif de followings récupérés ' + pseudoSet.size,
+      );
     }
-}
+  }
 
   private sleep(timeMilliSeconde: number): Promise<void> {
     return new Promise<void>((resolve) => {
@@ -490,5 +557,5 @@ export class ScrapingService implements IScrapingService {
 
 enum Follow {
   FOLLOWER,
-  FOLLOWING
+  FOLLOWING,
 }

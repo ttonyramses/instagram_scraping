@@ -6,7 +6,6 @@ import {
   format,
   Logger as LoggerWinston,
 } from 'winston';
-
 @injectable()
 export class Logger {
   private logDirectory: string;
@@ -36,8 +35,10 @@ export class Logger {
     this.logger = createLogger({
       format: format.combine(
         format.timestamp(),
+        format.errors({ stack: true }), // Inclure le stack d'erreur
         format.printf((info) => {
-          return `[${info.timestamp}] [${info.level}]: ${info.message} ${info.slat ? info.slat : ''}`;
+          const stack = info.stack ? '\n'+info.stack : '';
+          return `[${info.timestamp}] [${info.level}]: ${info.message} ${info.slat || ''} ${stack}`;
         }),
       ),
       transports: [
