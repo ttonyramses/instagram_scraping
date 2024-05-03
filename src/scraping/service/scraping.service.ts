@@ -399,6 +399,9 @@ export class ScrapingService implements IScrapingService {
     follow: Follow,
     selectorsFileName: string,
   ) {
+    this.page.on('console', (message) => {
+      this.logger.debug(`Console context page : ${message.text()}`);
+    });
     const selectorConfig = await import(
       (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
         '/' +
@@ -407,8 +410,10 @@ export class ScrapingService implements IScrapingService {
 
     let buttonFollow;
     if (follow === Follow.FOLLOWER) {
+      this.logger.info('Debut des traitements des followers pour le pseudo '+pseudo)
       buttonFollow = selectorConfig.pageInfo.buttonFollower;
     } else {
+      this.logger.info('Debut des traitements des followings pour le pseudo '+pseudo)
       buttonFollow = selectorConfig.pageInfo.buttonFollowing;
     }
     // Utilisez page.locator pour cibler le bouton plus précisément
@@ -456,6 +461,7 @@ export class ScrapingService implements IScrapingService {
         selectorConfig.popupFollow.listView,
         { state: 'attached' },
       );
+      await this.sleep(this.waitAfterActionLong);
       // Positionnez la souris sur l'élément
       await listView.hover();
     } catch (error) {
@@ -479,8 +485,9 @@ export class ScrapingService implements IScrapingService {
         await this.scroll();
         await this.sleep(this.waitAfterActionLong);
         nbElement = await usersPseudoLocator.count();
-      } while (nbElement < sizeLot * indice && nbElement > lastNbElement);
+      } while (nbElement < (sizeLot * indice) && nbElement > lastNbElement);
       doBoucleDoWhile = nbElement > lastNbElement;
+      this.logger.debug('startIndice = '+startIndice+' endIndice = '+nbElement+ ' doBoucleDoWhile = '+doBoucleDoWhile)
 
       this.logger.info('traitement du '+indice+'e lot de '+sizeLot)
       const usersNames = [];
@@ -564,9 +571,9 @@ export class ScrapingService implements IScrapingService {
     await this.sleep(this.waitAfterActionShort);
 
     if (follow == Follow.FOLLOWER) {
-      this.logger.info('Nombre de followers traités ' + nbGet);
+      this.logger.info('Nombre total de followers traités ' + nbGet);
     } else {
-      this.logger.info('Nombre de followings traités ' + nbGet);
+      this.logger.info('Nombre total de followings traités ' + nbGet);
     }
   }
 
