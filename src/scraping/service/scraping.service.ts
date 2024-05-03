@@ -14,6 +14,7 @@ export class ScrapingService implements IScrapingService {
   private browser: Browser;
   private baseUrl: string;
   private waitAfterActionLong: number;
+  private waitAfterLoadingData: number;
   private waitAfterActionShort: number;
 
   constructor(
@@ -27,6 +28,9 @@ export class ScrapingService implements IScrapingService {
     );
     this.waitAfterActionShort = parseInt(
       process.env.WAIT_AFTER_ACTION_SHORT || '500',
+    );
+    this.waitAfterLoadingData = parseInt(
+      process.env.WAIT_AFTER_LOADING_DATA || '30000',
     );
   }
 
@@ -399,7 +403,6 @@ export class ScrapingService implements IScrapingService {
     follow: Follow,
     selectorsFileName: string,
   ) {
-
     const selectorConfig = await import(
       (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
         '/' +
@@ -440,113 +443,125 @@ export class ScrapingService implements IScrapingService {
     await this.page.waitForLoadState('domcontentloaded');
 
     // const searchString = '0123456789abcdefghijklmnopqrstuvwxyz';
-    const searchString = 'abcdefghijklmnopqrstuvwxyz';
     let nbGet = 0;
     const pseudoSet = new Set();
-    for (const caractere of searchString) {
-      // Créer un locator pour l'élément que vous souhaitez faire défiler dans la vue
+    await this.sleep(this.waitAfterActionLong);
 
-      //saisie d'une caractère dans la bar de recherche
-      try {
-        // Sélectionnez l'élément input par son sélecteur CSS
-        const inputSearch = await this.page.waitForSelector(
-          selectorConfig.popupFollow.inputSearch,
-        );
+    /* let usersShow = this.page.locator(
+      selectorConfig.popupFollow.pseudoFollow,
+    );
+    let nbUsersShow = await usersShow.count();
+    this.logger.debug('nbUsersShow = ' + nbUsersShow);
+    let startIndice = 0; */
 
-        // Saisissez du texte dans le champ d'entrée
-        await inputSearch.fill(caractere);
-      } catch (error) {
-        this.logger.error('PB lors de la saisie du caractère ' + caractere);
-        continue;
-      }
-      //await this.sleep(this.waitAfterActionLong);
-      await this.page.waitForLoadState('domcontentloaded');
-
-      let usersShow = this.page.locator(
-        selectorConfig.popupFollow.nameWithoutIndice,
+    const sizeLot = parseInt(process.env.NB_FOLLOW_SIZE_PROCESS_BLOC || '1000');
+    try {
+      const listView = await this.page.waitForSelector(
+        selectorConfig.popupFollow.listView,
+        { state: 'attached' },
       );
-      let nbUsersShow = await usersShow.count();
-      this.logger.debug('nbUsersShow = ' + nbUsersShow);
-      let startIndice = 0;
+      // Positionnez la souris sur l'élément
+      await listView.hover();
+    } catch (error) {
+      this.logger.error('PB scrolling ', error);
+    }
+    let usersPseudoLocator = this.page.locator(
+      selectorConfig.popupFollow.pseudoFollow,
+    );
 
-      try {
-        const listView = await this.page.waitForSelector(
-          selectorConfig.popupFollow.listView,
-          { state: 'attached' },
-        );
-        // Positionnez la souris sur l'élément
-        await listView.hover();
-      } catch (error) {
-        this.logger.error('PB scrolling avec le caractère ' + caractere);
-        continue;
-      }
-
+    let startIndice = 0;
+    let doBoucleDoWhile = false;
+    let indice = 0;
+    do {
+      indice++;
+      let nbElement = await usersPseudoLocator.count();
+      let lastNbElement = nbElement;
       do {
-        const endIndice = nbUsersShow;
-        const usersNames = [];
+        lastNbElement = nbElement;
+        await this.scroll();
+        await this.scroll();
+        await this.scroll();
+        await this.sleep(this.waitAfterActionLong);
+        nbElement = await usersPseudoLocator.count();
+      } while (nbElement < sizeLot * indice && nbElement > lastNbElement);
+      doBoucleDoWhile = nbElement > lastNbElement;
 
-        for (let i = startIndice; i < endIndice; i++) {
+      this.logger.info('traitement du '+indice+'e lot de '+sizeLot)
+      const usersNames = [];
+      if (nbElement > 0) {
+        const allElement = await usersPseudoLocator.all();
+        for (let i= startIndice; i< nbElement; i++) {
           try {
-            const pseudoFollowingSelector = await this.page.waitForSelector(
-              selectorConfig.popupFollow.nameWithIndice.replace(
-                '$indice',
-                (i + 1).toString(),
-              ),
-              { state: 'attached' },
-            );
-            const text = await pseudoFollowingSelector.textContent();
-            if (!pseudoSet.has(text)) {
+            const text = await allElement[i].textContent();
+            /* if (!pseudoSet.has(text)) {
               pseudoSet.add(text);
-              usersNames.push(text);
-            }
+            } */
+            usersNames.push(text);
             nbGet++;
+
 
             if (
               nbGet % parseInt(process.env.NB_FOLLOW_LOG_PROCESS || '1000') ==
               0
             ) {
               if (follow == Follow.FOLLOWER) {
-                this.logger.info(
-                  'Nombre de followers traités ' + nbGet,
-                );
-                this.logger.info(
-                  'Nombre de followers récupérés ' + pseudoSet.size,
-                );
+                this.logger.info('Nombre de followers traités ' + nbGet);
               } else {
-                this.logger.info(
-                  'Nombre de followings traités ' + nbGet,
-                );
-                this.logger.info(
-                  'Nombre de followings récupérés ' + pseudoSet.size,
-                );
+                this.logger.info('Nombre de followings traités ' + nbGet);
               }
             }
-            
           } catch (error) {
             this.logger.error('pseudoFollowSelector error', error);
           }
         }
-
+        startIndice=nbElement
+        //sauvegarde en base de données
         if (follow == Follow.FOLLOWER) {
           await this.addFollowers(pseudo, usersNames);
         } else {
           await this.addFollowings(pseudo, usersNames);
         }
 
-        
+        //suppression de tous les elements de la listview des pseudos pour alléger le DOM
+        //on supprime que les 100 premier elements
 
-        // Faire défiler la page vers le bas de 600 pixels
+        /*console.log('Debut de la suppression des elements du DOM');
+        await this.page.evaluate(
+          (arg: { selector: string; sizeNotRemoveNode: number }) => {
+            const elementToRemove = document.querySelector(arg.selector);
+            if (elementToRemove.hasChildNodes()) {
+              console.log(
+                'suppression des enfants de la node ',
+                elementToRemove,
+              );
+              removeAllChildren(elementToRemove);
+            }
 
-        await this.scroll();
-        //await this.sleep(this.waitAfterActionLong);
-        await this.page.waitForLoadState('domcontentloaded');
-        nbUsersShow = await usersShow.count();
+            function removeAllChildren(node) {
+              const nbChild = node.childElementCount;
+              console.log('nombre de node enfants :', nbChild)
+              console.log('sizeNotRemoveNode :', arg.sizeNotRemoveNode)
+              let i = 0;
+              // Tant que le nœud a des enfants, les supprimer un par un et que le nombre ne depasse, le nombre de neaud initial on le supprime
+              //en effet pendant la suppression intagram recharge de nouveau noeuds, ceux ci il ne faut pas les supprimer
+              for (let i = 0; i < nbChild - arg.sizeNotRemoveNode; i++) {
+                // Utilise une promesse pour créer une attente asynchrone
+                node.firstChild.remove();
 
-        startIndice = endIndice;
-        this.logger.debug('nbUsersShow = ' + nbUsersShow);
-        this.logger.debug('startIndice = ' + startIndice);
-      } while (startIndice < nbUsersShow);
-    }
+            }
+              // Vous pouvez choisir de gérer l'erreur ici, par exemple en affichant un message à l'utilisateur ou en effectuant une autre action
+            }
+          },
+          {
+            selector: selectorConfig.popupFollow.listView,
+            sizeNotRemoveNode: sizeNotRemoveNode,
+          },
+        );
+        console.log('FIN de la suppression des elements du DOM');
+        await this.sleep(this.waitAfterActionLong);*/
+      }
+    } while (doBoucleDoWhile);
+
     await this.page.mouse.move(100, 100);
     await this.sleep(this.waitAfterActionShort);
     await this.page.mouse.click(100, 100);
@@ -554,14 +569,8 @@ export class ScrapingService implements IScrapingService {
 
     if (follow == Follow.FOLLOWER) {
       this.logger.info('Nombre de followers traités ' + nbGet);
-      this.logger.info(
-        'Nombre de followers récupérés ' + pseudoSet.size,
-      );
     } else {
       this.logger.info('Nombre de followings traités ' + nbGet);
-      this.logger.info(
-        'Nombre de followings récupérés ' + pseudoSet.size,
-      );
     }
   }
 
