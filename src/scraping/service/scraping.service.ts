@@ -14,7 +14,6 @@ export class ScrapingService implements IScrapingService {
   private browser: Browser;
   private baseUrl: string;
   private waitAfterActionLong: number;
-  private waitAfterLoadingData: number;
   private waitAfterActionShort: number;
 
   constructor(
@@ -28,9 +27,6 @@ export class ScrapingService implements IScrapingService {
     );
     this.waitAfterActionShort = parseInt(
       process.env.WAIT_AFTER_ACTION_SHORT || '500',
-    );
-    this.waitAfterLoadingData = parseInt(
-      process.env.WAIT_AFTER_LOADING_DATA || '30000',
     );
   }
 
