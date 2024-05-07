@@ -217,6 +217,7 @@ export class ScrapingService implements IScrapingService {
   private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
     this.browser = await chromium.launch({
       headless: (process.env.HEADLESS || 'true') === 'true',
+      args: ['--js-flags=--max-old-space-size=8192']
     });
     const context: BrowserContext = await this.browser.newContext();
     context.setDefaultTimeout(parseInt(process.env.SELECTOR_TIMEOUT || '5000'));

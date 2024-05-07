@@ -12,15 +12,15 @@ program
   .command('scrap-info')
   .description('scrap user information and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
-  .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
-  .option('-s, --selector <type>', 'file of selector in .json', 'selectors.json')
+  .option('-c, --cookies <type>', 'file of cookies in .json', 'cookies.json')
+  .option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllInfos(
         options.force ?? false,
-        options.cookie,
-        options.selector,
+        options.cookies,
+        options.selectors,
         options.users,
       );
     });
@@ -34,15 +34,15 @@ program
     '-hb, --hobbies [value...]',
     'hobby or list of hobbies to bind with users',
   )
-  .option('-c, --cookie <type>', 'file of cookies in .json', 'cookies.json')
-  .option('-s, --selector <type>', 'file of selector in .json', 'selectors.json')
+  .option('-c, --cookies <type>', 'file of cookies in .json', 'cookies.json')
+  .option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
   .option('-f, --force', 'force processing')
   .action(async (options) => {
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllFollow(
         options.force ?? false,
-        options.cookie,
-        options.selector,
+        options.cookies,
+        options.selectors,
         options.hobbies,
         options.users,
       );
