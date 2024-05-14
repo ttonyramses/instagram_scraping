@@ -5,7 +5,7 @@
     "nbFollowing": "main.xvbhtw8 header.x1qjc9v5 section.x1qjc9v5 ul li:nth-child(3) span._ac2a",
     "name": "main.xvbhtw8 header.x1qjc9v5 section.x1qjc9v5 div.x7a106z span.x1lliihq",
     "biography": "main.xvbhtw8 header.x1qjc9v5 section.x1qjc9v5 div.x7a106z h1",
-    "buttonFollower": "main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(2) a",
-    "buttonFollowing": "main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(3) a"
+    "buttonFollower": "main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(2) button",
+    "buttonFollowing": "main.xvbhtw8 header.x1qjc9v5 section ul li:nth-child(3) button"
   }
 }

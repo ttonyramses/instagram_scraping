@@ -7,6 +7,8 @@ import { HobbyDto } from '../../domaine/hobby/dto/hobby.dto';
 import { Browser, BrowserContext, Page, chromium } from 'playwright';
 import { UserDto } from '../../domaine/user/dto/user.dto';
 import { Logger } from 'winston';
+import { Lock } from 'async-await-mutex-lock';
+import { Follow, UserListResponse } from '../type';
 
 @injectable()
 export class ScrapingService implements IScrapingService {
@@ -15,6 +17,10 @@ export class ScrapingService implements IScrapingService {
   private baseUrl: string;
   private waitAfterActionLong: number;
   private waitAfterActionShort: number;
+  private nbFollowProcess: number;
+  private stopCallApi: boolean;
+  private lock = new Lock();
+  private allFollowProcess = new Set();
 
   constructor(
     @inject(TYPES.IUserService) private readonly userService: IUserService,
@@ -99,9 +105,12 @@ export class ScrapingService implements IScrapingService {
   }
 
   async getAllFollow(
+    follow: Follow,
     force: boolean,
     cookiesFileName: string,
     selectorsFileName: string,
+    maxId: string,
+    nbFollow: number,
     hobbies?: string[],
     pseudoList?: string[],
   ): Promise<void> {
@@ -115,7 +124,7 @@ export class ScrapingService implements IScrapingService {
         }
         if (user.hasProcess && !force) {
           this.logger.info(
-            'Les followers de ' +
+            'Les follow(ers/ings) de ' +
               user.id +
               ' sont déjà présentes dans la base de données',
           );
@@ -127,13 +136,10 @@ export class ScrapingService implements IScrapingService {
             });
             await this.getFollowOfUser(
               user.id,
-              Follow.FOLLOWER,
+              follow,
               selectorsFileName,
-            );
-            await this.getFollowOfUser(
-              user.id,
-              Follow.FOLLOWING,
-              selectorsFileName,
+              maxId,
+              nbFollow,
             );
             user.hasProcess = true;
             await this.userService.save(user);
@@ -162,13 +168,10 @@ export class ScrapingService implements IScrapingService {
               });
               await this.getFollowOfUser(
                 user.id,
-                Follow.FOLLOWER,
+                follow,
                 selectorsFileName,
-              );
-              await this.getFollowOfUser(
-                user.id,
-                Follow.FOLLOWING,
-                selectorsFileName,
+                maxId,
+                nbFollow,
               );
               user.hasProcess = true;
               await this.userService.save(user);
@@ -194,13 +197,10 @@ export class ScrapingService implements IScrapingService {
               });
               await this.getFollowOfUser(
                 user.id,
-                Follow.FOLLOWER,
+                follow,
                 selectorsFileName,
-              );
-              await this.getFollowOfUser(
-                user.id,
-                Follow.FOLLOWING,
-                selectorsFileName,
+                maxId,
+                nbFollow,
               );
               user.hasProcess = true;
               await this.userService.save(user);
@@ -398,6 +398,8 @@ export class ScrapingService implements IScrapingService {
     pseudo: string,
     follow: Follow,
     selectorsFileName: string,
+    maxId: string,
+    nbFollow: number,
   ) {
     this.page.on('console', (message) => {
       this.logger.debug(`Console context page : ${message.text()}`);
@@ -409,6 +411,7 @@ export class ScrapingService implements IScrapingService {
     );
 
     let endProcess = false;
+    let SIZE: number = 25;
     new Promise((resolve, reject) => {
       this.page.on('request', (request) => {
         const regex = /\/api\/v1\/friendships\/(\d+)\/(follow.*?)/;
@@ -425,60 +428,26 @@ export class ScrapingService implements IScrapingService {
     }).then(async (option: { url: string; headers: any }) => {
       //c'est ici qu'on va faire tous les appel api
 
-      let nbGet = 0;
-      let doBoucleDoWhile = false;
-      let newUrl = option.url;
-      do {
-        const responseData = (await this.page.evaluate(
-          async (args: { url: string; headers: any }) => {
-            try {
-              const response = await fetch(args.url, {
-                headers: args.headers || {},
-              });
+      this.nbFollowProcess = 0;
+      const nbQuery = Math.ceil(nbFollow / SIZE);
+      this.stopCallApi = false;
+      this.logger.debug('nbQuery =' + nbQuery);
+      for (let i = 0; i < nbQuery; i++) {
+        //   for (let i = 0; i < 10; i++) {
+        const newUrl = `${option.url}&max_id=${maxId}`;
+        this.logger.debug('newUrl = ' + newUrl);
+        maxId = await this.callApiAndSaveBdd(option, newUrl, follow, pseudo);
+        // await this.sleep(100)
+       // maxId = Number(maxId) + Number(SIZE);
 
-              if (!response.ok) {
-                throw new Error('Error insta api');
-              }
-              const dataJson = await response.json();
-              return dataJson;
-            } catch (error) {
-              this.logger.error('Error: '+ error);
-            }
-          },
-          { ...option, url: newUrl },
-        )) as UserListResponse;
-        newUrl = option.url + '&max_id=' + responseData.next_max_id;
-        doBoucleDoWhile = responseData.big_list;
-        const usersNames = [];
-        //sauvegarde des element un bdd
-        for (let user of responseData.users) {
-          try {
-            usersNames.push(user.username);
-            nbGet++;
-
-            if (
-              nbGet % parseInt(process.env.NB_FOLLOW_LOG_PROCESS || '1000') ==
-              0
-            ) {
-              if (follow == Follow.FOLLOWER) {
-                this.logger.info('Nombre de followers traités ' + nbGet);
-              } else {
-                this.logger.info('Nombre de followings traités ' + nbGet);
-              }
-            }
-          } catch (error) {
-            this.logger.error('pseudoFollowSelector error', error);
-          }
+        if (i % parseInt(process.env.NB_FOLLOW_QUERY_PROCESS || '100') == 0) {
+          await this.sleep(5_000);
         }
-
-        if (follow == Follow.FOLLOWER) {
-          await this.addFollowers(pseudo, usersNames);
-        } else {
-          await this.addFollowings(pseudo, usersNames);
+        if (this.stopCallApi) {
+          this.logger.debug('break');
+          break;
         }
-
-        await this.sleep(1_000);
-      } while (doBoucleDoWhile);
+      }
 
       //await this.sleep(this.waitAfterActionLong);
       await this.page.waitForLoadState('domcontentloaded');
@@ -489,10 +458,26 @@ export class ScrapingService implements IScrapingService {
       await this.sleep(this.waitAfterActionShort);
 
       if (follow == Follow.FOLLOWER) {
-        this.logger.info('Nombre total de followers traités ' + nbGet);
+        this.logger.info(
+          'Nombre total de followers traités ' + this.nbFollowProcess,
+        );
+        this.logger.info(
+          'Nombre total de followers sauvegardé en bdd ' +
+            this.allFollowProcess.size,
+        );
       } else {
-        this.logger.info('Nombre total de followings traités ' + nbGet);
+        this.logger.info(
+          'Nombre total de followings traités ' + this.nbFollowProcess,
+        );
+        this.logger.info(
+          'Nombre total de followings sauvegardé en bdd ' +
+            this.allFollowProcess.size,
+        );
       }
+
+      this.logger.debug(
+        'allFollowProcess = ' + Array.from(this.allFollowProcess).join(', '),
+      );
 
       endProcess = true;
     });
@@ -518,8 +503,8 @@ export class ScrapingService implements IScrapingService {
       );
       // Vérifiez si le bouton est visible et cliquez dessus
       if (await buttonFollowLocator.isVisible()) {
-        console.log('click sur le bouton follow')
         await buttonFollowLocator.click();
+        this.logger.info('click sur le bouton follow');
       } else {
         this.logger.info(
           "Le bouton follow n'a pas été trouvé ou n'est pas visible sur la page.",
@@ -536,11 +521,89 @@ export class ScrapingService implements IScrapingService {
     }
 
     do {
+      // on test toute les 5s seconde si le process est fini
+      await this.sleep(5_000);
+    } while (!endProcess);
+  }
 
-        // on test toute les 5s seconde si le process est fini
-        await this.sleep(5_000)
+  private async callApiAndSaveBdd(
+    option: { url: string; headers: any },
+    newUrl: string,
+    follow: Follow,
+    pseudo: string,
+  ): Promise<string> {
+    const responseData = (await this.page.evaluate(
+      async (args: { url: string; headers: any }) => {
+        try {
+          const response = await fetch(args.url, {
+            headers: args.headers || {},
+          });
 
-    } while(!endProcess);
+          if (!response.ok) {
+            throw new Error('Error insta api ' + args.url);
+          }
+          const dataJson = await response.json();
+          return dataJson;
+        } catch (error) {
+          this.logger.error('Error: ' + error);
+        }
+      },
+      { ...option, url: newUrl },
+    )) as UserListResponse;
+
+    if (responseData) {
+      this.logger.debug(
+        'user follow = ' + responseData.users.map((user) => user.username),
+      );
+      this.logger.debug('next_max_id = ' + responseData.next_max_id);
+      this.stopCallApi = !responseData.big_list;
+      const usersNames = [];
+      //sauvegarde des element un bdd
+      for (let user of responseData.users) {
+        try {
+          usersNames.push(user.username);
+          this.allFollowProcess.add(user.username);
+          this.nbFollowProcess++;
+
+          if (
+            this.nbFollowProcess %
+              parseInt(process.env.NB_FOLLOW_LOG_PROCESS || '1000') ==
+            0
+          ) {
+            if (follow == Follow.FOLLOWER) {
+              this.logger.info(
+                'Nombre de followers traités ' + this.nbFollowProcess,
+              );
+            } else {
+              this.logger.info(
+                'Nombre de followings traités ' + this.nbFollowProcess,
+              );
+            }
+          }
+        } catch (error) {
+          this.logger.error('pseudoFollowSelector error', error);
+        }
+      }
+
+      //etant données que cette fonction est multithread, la sauvegarde des données est synchronisée pour éviter les erreurs de sauvegarde en bdd
+      await this.lock.acquire();
+
+      try {
+        // console.log('userNames =',usersNames)
+        if (follow == Follow.FOLLOWER) {
+          await this.addFollowers(pseudo, usersNames);
+        } else {
+          await this.addFollowings(pseudo, usersNames);
+        }
+      } finally {
+        //console.log('releases lock')
+        this.lock.release();
+      }
+
+      return responseData.next_max_id;
+    } else {
+      throw new Error('Error call api');
+    }
   }
 
   private sleep(timeMilliSeconde: number): Promise<void> {
@@ -550,9 +613,4 @@ export class ScrapingService implements IScrapingService {
       }, timeMilliSeconde);
     });
   }
-}
-
-enum Follow {
-  FOLLOWER,
-  FOLLOWING,
 }

@@ -7,6 +7,7 @@ import { IScrapingService } from './scraping/interface/iscraping.service';
 import { TYPES } from './core/type.core';
 import container from './core/container.core';
 import { Logger } from './logger/service/logger.service';
+import {Follow} from './scraping/type';
 
 program
   .command('scrap-info')
@@ -27,8 +28,8 @@ program
   });
 
 program
-  .command('scrap-follow')
-  .description('scrap follower and following and save to database')
+  .command('scrap-followers')
+  .description('scrap followers and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
   .option(
     '-hb, --hobbies [value...]',
@@ -37,17 +38,51 @@ program
   .option('-c, --cookies <type>', 'file of cookies in .json', 'cookies.json')
   .option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
   .option('-f, --force', 'force processing')
+  .option('--max_id <type>', 'max id follow')
+  .option('--nb_follow <type>', 'number of followers')
   .action(async (options) => {
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllFollow(
+        Follow.FOLLOWER,
         options.force ?? false,
         options.cookies,
         options.selectors,
+        options.max_id??'0',
+        options.nb_follow??3000,
         options.hobbies,
         options.users,
       );
     });
   });
+
+  program
+  .command('scrap-followings')
+  .description('scrap following and save to database')
+  .option('-u, --users [value...]', 'user or list of user to process')
+  .option(
+    '-hb, --hobbies [value...]',
+    'hobby or list of hobbies to bind with users',
+  )
+  .option('-c, --cookies <type>', 'file of cookies in .json', 'cookies.json')
+  .option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
+  .option('-f, --force', 'force processing')
+  .option('--max_id <type>', 'max id follow')
+  .option('--nb_follow <type>', 'number of followings')
+  .action(async (options) => {
+    await bootstrap(async (scrapingService) => {
+      await scrapingService.getAllFollow(
+        Follow.FOLLOWING,
+        options.force ?? false,
+        options.cookies,
+        options.selectors,
+        options.max_id??'0',
+        options.nb_follow??3000,
+        options.hobbies,
+        options.users,
+      );
+    });
+  });
+
 
 program
   .command('add-hobby')

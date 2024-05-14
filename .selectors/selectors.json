@@ -7,9 +7,5 @@
     "biography": "main.xvbhtw8 header.xrvj5dj section.x14tfgiu div.x7a106z h1",
     "buttonFollower": "main.xvbhtw8 header.xrvj5dj section ul li:nth-child(2) a.x1i10hfl",
     "buttonFollowing": "main.xvbhtw8 header.xrvj5dj section ul li:nth-child(3) a.x1i10hfl"
-  },
-  "popupFollow": {
-    "listView": "div.x1ja2u2z div.x7r02ix div._aano div:nth-of-type(1) div",
-    "pseudoFollow": "div.x1ja2u2z div.x7r02ix div div._aano div:nth-of-type(1) div.x1dm5mii span._ap3a"
   }
 }

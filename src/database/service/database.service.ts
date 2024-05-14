@@ -3,8 +3,8 @@ import { DataSource, ObjectType, Repository } from 'typeorm';
 import { TYPES } from '../../core/type.core';
 import { IDatabaseService } from '../interface/idatabase.service';
 import { Logger } from '../../logger/service/logger.service';
-//import appDataSource from '../datasource_postgres.config';
-import appDataSource from '../datasource_sqlite.config';
+import appDataSource from '../datasource_postgres.config';
+//import appDataSource from '../datasource_sqlite.config';
 
 @injectable()
 export class DatabaseService implements IDatabaseService {

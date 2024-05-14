@@ -1,44 +1,52 @@
 [
     {
         "name":"rur",
-        "value":"CLN\\05466730262449\\0541746830466:01f730b6466342649ef672da53fb6f61c351182a7b7793ad7eea0f264a81d9bf08fa5ac4",
+        "value": "CLN\\05466971256470\\0541747227122:01f7d5bd0b5b0f9fbe1271003fdb04b82bdbd24741d857d186a2549af00106ae9b7d7fb6",
         "domain": ".instagram.com",
         "path": "/"
 
     },
     {
         "name":"sessionid",
-        "value":"66730262449%3AwC1yqR7es21y5I%3A0%3AAYcs0kYS7dJ6Dqm4JXQbc5iqvuOCn00nWl6ruCwHJw",
+        "value":"66971256470%3Af4093fcs9AeZlM%3A14%3AAYdK4q3I-aaPuAwkcxvPD7Bv8eZlwvnte-RuVR9R9g",
         "domain": ".instagram.com",
         "path": "/"
 
     },
     {
         "name":"csrftoken",
-        "value":"1xuZYLAb9IcBTt7JKW41slSBfHcblYCr",
+        "value":"7pb7MBYNLFlo1uY2EkaJ7InT96hx2naT",
         "domain": ".instagram.com",
         "path": "/"
 
     },
     {
         "name":"ig_did",
-        "value":"CF6FBBBD-8218-433D-AFDB-264A1D705097",
+        "value":"64636C24-A796-4AAE-A021-7A33E6DC28C4",
         "domain": ".instagram.com",
         "path": "/"
 
     },
     {
         "name":"ds_user_id",
-        "value":"66730262449",
+        "value":"66971256470",
+        "domain": ".instagram.com",
+        "path": "/"
+
+    },
+    {
+        "name":"datr",
+        "value":"UT9DZhMNVqDCrfpnH7uYqIu4",
         "domain": ".instagram.com",
         "path": "/"
 
     },
     {
         "name":"mid",
-        "value":"ZaF9WwAEAAHCgIdtT29tRzsbR49-",
+        "value":"ZkM_SgAEAAGetqFIBaSyeCUwAmUN",
         "domain": ".instagram.com",
         "path": "/"
 
     }
+
 ]

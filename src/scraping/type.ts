@@ -16,7 +16,7 @@ interface User {
     latest_reel_media: number;
   }
   
-  interface UserListResponse {
+  export interface UserListResponse {
     big_list: boolean;
     page_size: number;
     next_max_id: string | null;
@@ -26,4 +26,9 @@ interface User {
     show_spam_follow_request_tab: boolean;
     status: string;
     users: User[];
+  }
+
+  export enum Follow {
+    FOLLOWER,
+    FOLLOWING,
   }

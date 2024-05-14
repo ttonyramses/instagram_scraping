@@ -1,20 +1,20 @@
-mail: christ_insta_evang_0001@yopmail.com
+mail: christian_insta_evang_0001@yopmail.com
 pwd: pwd_christ_insta_evang_0001
-pseudo: christmambo6
+pseudo: christian_insta_evang_0001
 
 
-mail: christ_intsta_evang_0002@yopmail.com
-pwd: pwd_christ_intsta_evang_0002
-pseudo: christ_intsta_evang_0002
+mail: christian_intsta_evang_0002@yopmail.com
+pwd: pwd_christian_intsta_evang_0002
+pseudo: christian_intsta_evang_0002
 
 
-mail: christ_insta_evang_0003@yopmail.com
-pwd: pwd_christ_insta_evang_0003
-pseudo: christ_insta_evang_0003
+mail: christian_insta_evang_0003@yopmail.com
+pwd: pwd_christian_insta_evang_0003
+pseudo: christian_insta_evang_0003
 
-mail: christ_insta_evang_0004@yopmail.com  
-pwd: pwd_christ_insta_evang_0004
-pseudo: christ_insta_evang_0004
+mail: christian_insta_evang_0004@yopmail.com  
+pwd: pwd_christian_insta_evang_0004
+pseudo: christian_insta_evang_0004
 
 mail: christ_insta_evang_0005@yopmail.com
 pwd: pwd_christ_insta_evang_0005
