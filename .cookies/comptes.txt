@@ -1,21 +1,21 @@
-mail: christian_insta_evang_0001@yopmail.com
-pwd: pwd_christ_insta_evang_0001
-pseudo: christian_insta_evang_0001
+mail: papa_yougo_star1@yopmail.com
+pseudo: papa_yougo_star1
+pwd: pwd_papa_yougo_star1
 
 
-mail: christian_intsta_evang_0002@yopmail.com
-pwd: pwd_christian_intsta_evang_0002
-pseudo: christian_intsta_evang_0002
+mail: papa_yougo_star2@yopmail.com
+pseudo: papa_yougo_star2
+pwd: pwd_papa_yougo_star2
 
 
-mail: christian_insta_evang_0003@yopmail.com
-pwd: pwd_christian_insta_evang_0003
-pseudo: christian_insta_evang_0003
+mail: papa_yougo_star3@yopmail.com
+pseudo: papa_yougo_star3
+pwd: pwd_papa_yougo_star3
 
-mail: christian_insta_evang_0004@yopmail.com  
-pwd: pwd_christian_insta_evang_0004
-pseudo: christian_insta_evang_0004
+mail: papa_yougo_star4@yopmail.com  
+pseudo: papa_yougo_star4
+pwd: pwd_papa_yougo_star4
 
-mail: christ_insta_evang_0005@yopmail.com
-pwd: pwd_christ_insta_evang_0005
-pseudo: christ_insta_evang_0005
+mail: papa_yougo_star5@yopmail.com
+pseudo: papa_yougo_star5
+pwd: pwd_papa_yougo_star5

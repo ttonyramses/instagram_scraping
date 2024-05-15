@@ -51,6 +51,10 @@ export class Logger {
           filename: this.logDirectory+'/instagram_scraping_activity.log',
           level: process.env.LOG_LEVEL || 'info',
         }),
+        new transports.File({
+          filename: this.logDirectory+'/instagram_scraping_debug.log',
+          level: 'debug',
+        }),
       ],
       level: process.env.LOG_LEVEL || 'info',
     });

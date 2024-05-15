@@ -402,7 +402,11 @@ export class ScrapingService implements IScrapingService {
     nbFollow: number,
   ) {
     this.page.on('console', (message) => {
-      this.logger.debug(`Console context page : ${message.text()}`);
+      if (message.type() === 'error') {
+        this.logger.error(`Console error context page : ${message.text()}`);
+      } else {
+        this.logger.debug(`Console context page : ${message.text()}`);
+      }
     });
     const selectorConfig = await import(
       (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
@@ -438,7 +442,7 @@ export class ScrapingService implements IScrapingService {
         this.logger.debug('newUrl = ' + newUrl);
         maxId = await this.callApiAndSaveBdd(option, newUrl, follow, pseudo);
         // await this.sleep(100)
-       // maxId = Number(maxId) + Number(SIZE);
+        // maxId = Number(maxId) + Number(SIZE);
 
         if (i % parseInt(process.env.NB_FOLLOW_QUERY_PROCESS || '100') == 0) {
           await this.sleep(5_000);
@@ -448,6 +452,8 @@ export class ScrapingService implements IScrapingService {
           break;
         }
       }
+
+      this.logger.info('pseudo =' + pseudo + ' last max_id = ' + maxId);
 
       //await this.sleep(this.waitAfterActionLong);
       await this.page.waitForLoadState('domcontentloaded');
@@ -579,6 +585,7 @@ export class ScrapingService implements IScrapingService {
                 'Nombre de followings traités ' + this.nbFollowProcess,
               );
             }
+            this.logger.info('next_max_id = ' + responseData.next_max_id);
           }
         } catch (error) {
           this.logger.error('pseudoFollowSelector error', error);
