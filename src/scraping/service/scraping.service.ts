@@ -9,10 +9,13 @@ import { UserDto } from '../../domaine/user/dto/user.dto';
 import { Logger } from 'winston';
 import { Lock } from 'async-await-mutex-lock';
 import { Follow, UserListResponse } from '../type';
+import { User } from 'src/domaine/user/entity/user.entity';
+import { Pool, Worker, spawn } from 'threads';
 
 @injectable()
 export class ScrapingService implements IScrapingService {
   private page: Page;
+  private context: BrowserContext;
   private browser: Browser;
   private baseUrl: string;
   private waitAfterActionLong: number;
@@ -82,26 +85,44 @@ export class ScrapingService implements IScrapingService {
           );
           continue;
         } else {
-          const userDto = await this.getInfoUserOnPage(
-            pseudo,
-            selectorsFileName,
-          );
-          await this.userService.save(userDto);
+          this.getAndSaveInfoUser(pseudo, selectorsFileName);
         }
       }
     } else {
       const users = force
         ? await this.userService.findAll()
         : await this.userService.findAllWithNoInfo();
-      for (const user of users) {
-        const userDto = await this.getInfoUserOnPage(
-          user.id,
-          selectorsFileName,
+      let i = 0;
+
+      const pool = Pool(
+        () => spawn(new Worker('../multithreading/worker')),
+        parseInt(
+          process.env.NB_THREAD_GET_INFO_USER || '10',
+        ) /* optional size */
+      );
+
+      this.logger.info('start init Tasks for getAllInfo User');
+      const tasks = users.map((user) => {
+        return pool.queue((worker) =>
+          this.getAndSaveInfoUser(user.id, selectorsFileName),
         );
-        await this.userService.save(userDto);
-      }
+      });
+      this.logger.info('end init Tasks for getAllInfo User');
+
+      this.logger.info(tasks.length+' user a traiter');
+      await Promise.all(tasks);
+      await pool.completed();
+      await pool.terminate();
     }
+
     await this.closeBrowser();
+  }
+
+  private async getAndSaveInfoUser(pseudo: string, selectorsFileName: string) {
+    const userDto = await this.getInfoUserOnPage(pseudo, selectorsFileName);
+    if (userDto.nbFollowers != undefined && userDto.nbFollowing != undefined) {
+      await this.userService.save(userDto);
+    }
   }
 
   async getAllFollow(
@@ -218,9 +239,11 @@ export class ScrapingService implements IScrapingService {
     this.browser = await chromium.launch({
       headless: (process.env.HEADLESS || 'true') === 'true',
     });
-    const context: BrowserContext = await this.browser.newContext();
-    context.setDefaultTimeout(parseInt(process.env.SELECTOR_TIMEOUT || '5000'));
-    context.setDefaultNavigationTimeout(
+    this.context = await this.browser.newContext();
+    this.context.setDefaultTimeout(
+      parseInt(process.env.SELECTOR_TIMEOUT || '5000'),
+    );
+    this.context.setDefaultNavigationTimeout(
       parseInt(process.env.NAVIGATION_TIMEOUT || '60000'),
     );
 
@@ -231,13 +254,13 @@ export class ScrapingService implements IScrapingService {
     );
 
     // Autoriser les notifications
-    await context.grantPermissions(['notifications'], {
+    await this.context.grantPermissions(['notifications'], {
       origin: this.baseUrl,
     });
 
-    this.page = await context.newPage();
+    this.page = await this.context.newPage();
 
-    await context.addCookies(cookies);
+    await this.context.addCookies(cookies);
 
     const newUrl = this.baseUrl + (suiteUrl ? suiteUrl : '');
     await this.page.goto(newUrl); // Remplacez par l'URL désirée
@@ -254,7 +277,7 @@ export class ScrapingService implements IScrapingService {
     }
 
     // Retirer les espaces pour gérer les formats comme "1 256"
-    input = input.replace(/\s+/g, '');
+    input = input.replace(/(\s+|,|\.)/g, '');
 
     // Déterminer si le dernier caractère est une lettre indiquant un multiplicateur
     const suffix = input.slice(-1);
@@ -292,9 +315,15 @@ export class ScrapingService implements IScrapingService {
   ): Promise<UserDto> {
     const user = new UserDto();
     const url = this.baseUrl + '/' + pseudo;
-    await this.page.goto(url);
-    await this.sleep(this.waitAfterActionShort);
+    const myPage: Page = await this.context.newPage();
     user.id = pseudo;
+    try {
+      await myPage.goto(url, { waitUntil: 'networkidle' });
+      await this.sleep(this.waitAfterActionLong);
+    } catch (error) {
+      this.logger.error(`erreur go to page ${url} ${error.message}`);
+      return user;
+    }
 
     const selectorConfig = await import(
       (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
@@ -303,8 +332,23 @@ export class ScrapingService implements IScrapingService {
     );
 
     try {
+      const pageNotFound = await myPage
+        .locator(selectorConfig.pageInfo.pageNotFound)
+        .first()
+        .textContent();
+      this.logger.debug(pseudo + ' ' + pageNotFound);
+
+      user.nbFollowers = 0;
+      user.nbFollowing = 0;
+      user.enable = false;
+      user.hasInfo = true;
+      await myPage.close();
+      return user;
+    } catch (error) {}
+
+    try {
       user.nbFollowers = await this.parseNumberFromString(
-        await this.page
+        await myPage
           .locator(selectorConfig.pageInfo.nbFollowers)
           .first()
           .textContent(),
@@ -319,7 +363,7 @@ export class ScrapingService implements IScrapingService {
     }
 
     try {
-      const nbFollowingString = await this.page
+      const nbFollowingString = await myPage
         .locator(selectorConfig.pageInfo.nbFollowing)
         .first()
         .textContent();
@@ -334,7 +378,7 @@ export class ScrapingService implements IScrapingService {
     }
 
     try {
-      user.name = await this.page
+      user.name = await myPage
         .locator(selectorConfig.pageInfo.name)
         .first()
         .textContent();
@@ -348,7 +392,7 @@ export class ScrapingService implements IScrapingService {
     }
 
     try {
-      user.biography = await this.page
+      user.biography = await myPage
         .locator(selectorConfig.pageInfo.biography)
         .first()
         .textContent();
@@ -361,15 +405,8 @@ export class ScrapingService implements IScrapingService {
       );
     }
     user.hasInfo = true;
+    await myPage.close();
     return user;
-  }
-
-  private async scroll() {
-    for (let i = 0; i < 3; i++) {
-      await this.page.mouse.wheel(0, 600);
-
-      await this.sleep(this.waitAfterActionShort);
-    }
   }
 
   private async addFollowers(pseudo, userIds) {

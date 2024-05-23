@@ -26,6 +26,10 @@ export class User {
     @Column('boolean', {default: false})
     hasProcess: boolean
 
+    @Column('boolean', {default: true})
+    enable: boolean
+
+
 
     @ManyToMany((type) => User, (user) => user.followers, {
         cascade: ['insert', 'update'],

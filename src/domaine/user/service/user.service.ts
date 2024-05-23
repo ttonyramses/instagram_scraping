@@ -84,13 +84,18 @@ export class UserService implements IUserService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.userRepository.find({
+      where: {
+        enable: true
+      },
+    });
   }
 
   async findAllWithNoInfo(): Promise<User[]> {
     return this.userRepository.find({
       where: {
         hasInfo: false,
+        enable: true
       },
     });
   }

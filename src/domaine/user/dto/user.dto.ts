@@ -8,4 +8,5 @@ export class UserDto {
   nbFollowing?: number;
   hasInfo?: boolean;
   hasProcess?: boolean;
+  enable?: boolean;
 }
