@@ -144,10 +144,10 @@ export class ScrapingService implements IScrapingService {
     const userDto = await this.getInfoUserOnPage(pseudo);
 
     if (userDto.nbFollowers != undefined && userDto.nbFollowings != undefined) {
-      this.logger.info(`save userDto = ${JSON.stringify(userDto)}`);
+      this.logger.debug(`save userDto = ${JSON.stringify(userDto)}`);
       await this.userService.save(userDto);
     } else {
-      this.logger.info(`not save userDto = ${JSON.stringify(userDto)}`);
+      this.logger.debug(`not save userDto = ${JSON.stringify(userDto)}`);
     }
     this.nbItemProcess++;
     if (
