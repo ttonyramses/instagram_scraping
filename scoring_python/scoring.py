@@ -207,6 +207,7 @@ def send_to_bdd(session, engine, df):
                     'hobby_in_bio': row['hobby_in_bio']
                 }
             )
+            print(index)
         session.commit()
         print("Scoring ajouté dans la base de données")
 
@@ -233,7 +234,6 @@ def let_scoring():
     FROM user_followers uf
     JOIN user_hobby uh ON uf.user_id = uh.user_id
     JOIN hobby h ON uh.hobby_id = h.id
-    LIMIT 100
     """
     # Exécution de la requête SQL et chargement des données dans un DataFrame
     data = pd.read_sql_query(query, engine)
@@ -296,12 +296,9 @@ parser.add_argument('-sc', '--scoring', help='Exécuter la fonction qui défini 
 # Analyser les arguments
 args = parser.parse_args()
 
-if args.export_scoring:
-    hobbies = args.export_scoring[0:]
-    if hobbies is None:
-        extract_user_scoring([])
-    else:
-        extract_user_scoring(hobbies)
+# Traitement en fonction des arguments reçus
+
+
 
 if args.add_keywords:
     hobby = args.add_keywords[0]
@@ -310,6 +307,17 @@ if args.add_keywords:
 
 if args.scoring:
     let_scoring()
+
+#if args.export_scoring is None:
+    #print("Aucun hobby spécifié pour l'exportation.")
+    #extract_user_scoring([])
+#elif len(args.export_scoring) == 0:
+    #print("Option --export_scoring utilisée sans hobbies spécifiques.")
+    #extract_user_scoring([])
+#else:
+    #hobbies = args.export_scoring[0:]
+    #print("Exportation du scoring pour les hobbies :", args.export_scoring)
+    #extract_user_scoring(hobbies)
 
 
 #pip install openpyxl
