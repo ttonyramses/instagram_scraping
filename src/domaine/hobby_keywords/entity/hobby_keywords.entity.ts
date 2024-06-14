@@ -1,25 +1,21 @@
 //import "reflect-metadata";
 import {
   Entity,
-  Column,
   ManyToOne,
-  Unique,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
+  JoinColumn,
 } from 'typeorm';
-import { User } from '../../user/entity/user.entity';
 import { Hobby } from '../../hobby/entity/hobby.entity';
 
 
 @Entity({ name: 'hobby_keywords' })
-@Unique(['hobby_id', 'keyword'])
-export class hobby_keywords {
+export class HobbyKeywords {
 
-  
-  @ManyToOne(() => Hobby)
-  hobby_id: Hobby;
+  @ManyToOne(() => Hobby, hobby => hobby.hobbyKeywords)
+  @JoinColumn({ name: 'hobby_id' })
+  @PrimaryColumn({ name: 'hobby_id', type: 'int' })
+  hobby: Hobby;
 
-  @Column('text', { nullable: true })
-  keyword: string | null 
-
+  @PrimaryColumn('varchar')
+  keyword: string  
 }

@@ -24,12 +24,12 @@ export class weighting {
   @ManyToOne(() => User)
   user: User;
 
-  @Column('int')
-  score: number;
+  @Column('int', { nullable: true })
+  score: number | null;
 
-  @Column('int')
-  occurrences: number;
+  @Column('int', { nullable: true })
+  occurrences: number | null;
 
-  @Column('int')
-  hobby_in_bio: number;
+  @Column('int', { nullable: true })
+  hobby_in_bio: number | null;
 }
