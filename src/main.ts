@@ -13,14 +13,12 @@ program
   .command('scrap-info')
   .description('scrap user information and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
-  .option('-c, --cookies <type>', 'file of cookies in .json', 'cookies.json')
-  .option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
   .option('-f, --force', 'force processing')
+  .option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
   .action(async (options) => {
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllInfos(
         options.force ?? false,
-        options.cookies,
         options.selectors,
         options.users,
       );
@@ -76,7 +74,7 @@ program
         options.cookies,
         options.selectors,
         options.max_id??'0',
-        options.nb_follow??3000,
+        options.nb_follow??10000,
         options.hobbies,
         options.users,
       );

@@ -18,7 +18,25 @@ export class User {
     nbFollowers: number | null
 
     @Column('int', { nullable: true })
-    nbFollowing: number | null
+    nbFollowings: number | null
+
+    @Column('int', { nullable: true })
+    nbPublications: number | null
+
+    @Column('bigint', { nullable: true })
+    intagramId: number | null
+
+    @Column('bigint', { nullable: true })
+    facebookId: number | null
+
+    @Column('varchar', { nullable: true })
+    category: string | null
+
+    @Column('varchar', { nullable: true })
+    externalUrl: string | null
+
+    @Column('varchar', { nullable: true })
+    profileUrl: string | null
 
     @Column('boolean', {default: false})
     hasInfo: boolean

@@ -28,6 +28,29 @@ interface User {
     users: User[];
   }
 
+  export interface UserProfileResponse {
+    data: {
+      user: {
+        username: string;
+        full_name: string;
+        biography: string;
+        follower_count: number;
+        following_count: number;
+        media_count: number;
+        pk: number;
+        fbid_v2: number;
+        category: any;
+        profile_pic_url: string;
+        hd_profile_pic_url_info: {
+          url: string;
+        };
+        external_url: string;
+      };
+    };
+
+  }
+  
+
   export enum Follow {
     FOLLOWER,
     FOLLOWING,

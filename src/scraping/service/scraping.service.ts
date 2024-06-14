@@ -4,11 +4,19 @@ import { TYPES } from '../../core/type.core';
 import { IUserService } from '../../domaine/user/interface/iuser.service';
 import { IHobbyService } from '../../domaine/hobby/interface/ihobby.service';
 import { HobbyDto } from '../../domaine/hobby/dto/hobby.dto';
-import { Browser, BrowserContext, Page, chromium } from 'playwright';
+import {
+  Browser,
+  BrowserContext,
+  BrowserType,
+  Page,
+  chromium,
+  firefox,
+  webkit,
+} from 'playwright';
 import { UserDto } from '../../domaine/user/dto/user.dto';
 import { Logger } from 'winston';
 import { Lock } from 'async-await-mutex-lock';
-import { Follow, UserListResponse } from '../type';
+import { Follow, UserListResponse, UserProfileResponse } from '../type';
 import { User } from 'src/domaine/user/entity/user.entity';
 import { Pool, Worker, spawn } from 'threads';
 
@@ -65,11 +73,10 @@ export class ScrapingService implements IScrapingService {
 
   async getAllInfos(
     force: boolean,
-    cookiesFileName: string,
     selectorsFileName: string,
     pseudoList?: string[],
   ): Promise<void> {
-    await this.initBrowser('/', cookiesFileName);
+    await this.initBrowser('/', chromium, undefined, selectorsFileName);
     if (pseudoList && pseudoList.length > 0) {
       for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
@@ -85,7 +92,8 @@ export class ScrapingService implements IScrapingService {
           );
           continue;
         } else {
-          this.getAndSaveInfoUser(pseudo, selectorsFileName);
+          this.getAndSaveInfoUser(pseudo);
+          await this.sleep(5_000);
         }
       }
     } else {
@@ -98,29 +106,41 @@ export class ScrapingService implements IScrapingService {
         () => spawn(new Worker('../multithreading/worker')),
         parseInt(
           process.env.NB_THREAD_GET_INFO_USER || '10',
-        ) /* optional size */
+        ) /* optional size */,
       );
 
-      this.logger.info('start init Tasks for getAllInfo User');
-      const tasks = users.map((user) => {
-        return pool.queue((worker) =>
-          this.getAndSaveInfoUser(user.id, selectorsFileName),
+      const blockSize = parseInt(
+        process.env.BLOCK_SIZE_THREAD_GET_INFO_USER || '5000',
+      );
+      let indexBloc = 0;
+      for (let i = 0; i < users.length; i += blockSize) {
+        indexBloc++;
+        // Extraire un bloc de 50 éléments
+        let block_users = users.slice(i, i + blockSize);
+        this.logger.info(
+          'start init Tasks for getAllInfo User block N° ' + indexBloc,
         );
-      });
-      this.logger.info('end init Tasks for getAllInfo User');
+        const tasks = block_users.map((user) => {
+          return pool.queue((worker) => this.getAndSaveInfoUser(user.id));
+        });
+        this.logger.info(
+          'end init Tasks for getAllInfo User block N° ' + indexBloc,
+        );
 
-      this.logger.info(tasks.length+' user a traiter');
-      await Promise.all(tasks);
-      await pool.completed();
-      await pool.terminate();
+        await Promise.all(tasks);
+        await pool.completed();
+        await pool.terminate();
+      }
+      await this.sleep(20_000);
     }
 
     await this.closeBrowser();
   }
 
-  private async getAndSaveInfoUser(pseudo: string, selectorsFileName: string) {
-    const userDto = await this.getInfoUserOnPage(pseudo, selectorsFileName);
-    if (userDto.nbFollowers != undefined && userDto.nbFollowing != undefined) {
+  private async getAndSaveInfoUser(pseudo: string) {
+    const userDto = await this.getInfoUserOnPage(pseudo);
+    this.logger.info(`userDto = ${JSON.stringify(userDto)}`);
+    if (userDto.nbFollowers != undefined && userDto.nbFollowings != undefined) {
       await this.userService.save(userDto);
     }
   }
@@ -135,7 +155,7 @@ export class ScrapingService implements IScrapingService {
     hobbies?: string[],
     pseudoList?: string[],
   ): Promise<void> {
-    await this.initBrowser('/', cookiesFileName);
+    await this.initBrowser('/', chromium, cookiesFileName);
     if (pseudoList && pseudoList.length > 0) {
       for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
@@ -177,7 +197,7 @@ export class ScrapingService implements IScrapingService {
         for (const user of users) {
           if (user.hasProcess && !force) {
             this.logger.info(
-              'Les followers de ' +
+              'Les follow(ers/ings) de ' +
                 user.id +
                 ' sont déjà présentes dans la base de données',
             );
@@ -206,7 +226,7 @@ export class ScrapingService implements IScrapingService {
         for (const user of users) {
           if (user.hasProcess && !force) {
             this.logger.info(
-              'Les followers de ' +
+              'Les follow(ers/ings) de ' +
                 user.id +
                 ' sont déjà présentes dans la base de données',
             );
@@ -235,8 +255,13 @@ export class ScrapingService implements IScrapingService {
     await this.closeBrowser();
   }
 
-  private async initBrowser(suiteUrl: string, cookiesFileName?: string) {
-    this.browser = await chromium.launch({
+  private async initBrowser(
+    suiteUrl: string,
+    browserType: BrowserType,
+    cookiesFileName?: string,
+    selectorsFileName?: string,
+  ) {
+    this.browser = await browserType.launch({
       headless: (process.env.HEADLESS || 'true') === 'true',
     });
     this.context = await this.browser.newContext();
@@ -247,11 +272,16 @@ export class ScrapingService implements IScrapingService {
       parseInt(process.env.NAVIGATION_TIMEOUT || '60000'),
     );
 
-    const cookies = await import(
-      (process.env.COOKIES_JSON_DIR || '../../../.cookies') +
-        '/' +
-        cookiesFileName
-    );
+    await this.context.clearCookies();
+
+    if (cookiesFileName) {
+      const cookies = await import(
+        (process.env.COOKIES_JSON_DIR || '../../../.cookies') +
+          '/' +
+          cookiesFileName
+      );
+      await this.context.addCookies(cookies);
+    }
 
     // Autoriser les notifications
     await this.context.grantPermissions(['notifications'], {
@@ -260,10 +290,37 @@ export class ScrapingService implements IScrapingService {
 
     this.page = await this.context.newPage();
 
-    await this.context.addCookies(cookies);
-
     const newUrl = this.baseUrl + (suiteUrl ? suiteUrl : '');
     await this.page.goto(newUrl); // Remplacez par l'URL désirée
+
+    await this.page.evaluate(() => {
+      localStorage.clear();
+      sessionStorage.clear();
+    });
+
+    //Pour clicker sur le bouton autoriser les cookies
+    if (selectorsFileName && !cookiesFileName) {
+      const selectorConfig = await import(
+        (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
+          '/' +
+          selectorsFileName
+      );
+
+      const buttonAuthoriseCookiesSelector =
+        selectorConfig.pageInfo.buttonAuthoriseCookies;
+      try {
+        this.logger.info('clique sur le bouton autoriser les cookies');
+        await this.sleep(this.waitAfterActionLong);
+        await this.page.locator(buttonAuthoriseCookiesSelector).click();
+      } catch (error) {
+        this.logger.error(
+          "impossible d'effectuer le selecteur '" +
+            buttonAuthoriseCookiesSelector +
+            "'",
+        );
+      }
+    }
+
     this.logger.info('Lancement du navigateur OK');
   }
 
@@ -271,142 +328,88 @@ export class ScrapingService implements IScrapingService {
     await this.browser.close();
   }
 
-  private async parseNumberFromString(input: string): Promise<number | null> {
-    if (typeof input !== 'string') {
-      throw new Error('Input must be a string');
-    }
-
-    // Retirer les espaces pour gérer les formats comme "1 256"
-    input = input.replace(/(\s+|,|\.)/g, '');
-
-    // Déterminer si le dernier caractère est une lettre indiquant un multiplicateur
-    const suffix = input.slice(-1);
-    const isMultiplier = isNaN(parseInt(suffix));
-
-    // Préparer la partie numérique de la chaîne en fonction de la présence d'un multiplicateur
-    let numberPart = isMultiplier ? input.slice(0, -1) : input;
-    numberPart = numberPart.replace(',', '.');
-
-    // Convertir le segment numérique en flottant
-    const value = parseFloat(numberPart);
-
-    // Déterminer le multiplicateur basé sur le suffixe, si c'est un multiplicateur
-    if (isMultiplier) {
-      switch (suffix.toUpperCase()) {
-        case 'K':
-          return value * 1000;
-        case 'M':
-          return value * 1000000;
-        case 'B':
-          return value * 1000000000;
-        default:
-          // Si le suffixe n'est pas reconnu comme un multiplicateur valide
-          return isNaN(value) ? null : value;
-      }
-    }
-
-    // Si aucun suffixe n'est présent, retourner simplement la valeur numérique
-    return isNaN(value) ? null : value;
-  }
-
-  private async getInfoUserOnPage(
-    pseudo: string,
-    selectorsFileName: string,
-  ): Promise<UserDto> {
+  private async getInfoUserOnPage(pseudo: string): Promise<UserDto> {
     const user = new UserDto();
     const url = this.baseUrl + '/' + pseudo;
     const myPage: Page = await this.context.newPage();
+
     user.id = pseudo;
+
+    let endProcess = true;
+
+    new Promise((resolve, reject) => {
+      let hasGetInfo = false;
+      myPage.on('request', async (request) => {
+        const regexGraphQl = /\/api\/graphql/;
+        const matchGraphQl = regexGraphQl.exec(request.url());
+
+        const regexBulkRoute = /ajax\/bulk-route-definitions/;
+        const matchBulkRoute = regexBulkRoute.exec(request.url());
+
+        const regexLoginPage = /\/api\/v1\/web\/login_page/;
+        const matchLoginPage = regexLoginPage.exec(request.url());
+
+        if (request.resourceType() === 'xhr' && matchGraphQl && !hasGetInfo) {
+          try {
+            const response = await request.response();
+            const body = await response.json();
+            // this.logger.info(`body  ${pseudo}  = ${JSON.stringify(body)}`);
+            if (body.data.user != undefined) {
+              endProcess = false;
+              hasGetInfo = true;
+              resolve(body);
+            }
+          } catch (error) {
+            this.logger.error(
+              `erreur get response for url ${request.url()} error: ${error.message}`,
+            );
+          }
+        } else if (
+          request.resourceType() === 'xhr' &&
+          matchBulkRoute &&
+          !hasGetInfo
+        ) {
+          this.logger.info(`${pseudo} : ce pseudo est certainement desactivé`);
+          user.nbFollowers = 0;
+          user.nbFollowings = 0;
+          user.enable = false;
+          user.hasInfo = true;
+        } else if (request.resourceType() === 'xhr' && matchLoginPage) {
+          this.logger.info(`Vous êtes deja blacklistés par instagram`);
+          throw new Error('Veuillez changer de poste ou de IP');
+        }
+      });
+    }).then(async (response: UserProfileResponse) => {
+      user.name = response.data.user.full_name;
+      user.biography = response.data.user.biography;
+      user.nbFollowers = response.data.user.follower_count;
+      user.nbFollowings = response.data.user.following_count;
+      user.nbPublications = response.data.user.media_count;
+      user.intagramId = response.data.user.pk;
+      user.facebookId = response.data.user.fbid_v2;
+      user.category = response.data.user.category;
+      user.externalUrl = response.data.user.external_url;
+      user.profileUrl = response.data.user.hd_profile_pic_url_info.url;
+      user.hasInfo = true;
+      user.enable = true;
+      endProcess = true;
+    });
+
     try {
-      await myPage.goto(url, { waitUntil: 'networkidle' });
-      await this.sleep(this.waitAfterActionLong);
+      await myPage.goto(url);
     } catch (error) {
       this.logger.error(`erreur go to page ${url} ${error.message}`);
       return user;
     }
 
-    const selectorConfig = await import(
-      (process.env.SELECTORS_JSON_DIR || '../../../.selectors') +
-        '/' +
-        selectorsFileName
-    );
-
-    try {
-      const pageNotFound = await myPage
-        .locator(selectorConfig.pageInfo.pageNotFound)
-        .first()
-        .textContent();
-      this.logger.debug(pseudo + ' ' + pageNotFound);
-
-      user.nbFollowers = 0;
-      user.nbFollowing = 0;
-      user.enable = false;
-      user.hasInfo = true;
-      await myPage.close();
-      return user;
-    } catch (error) {}
-
-    try {
-      user.nbFollowers = await this.parseNumberFromString(
-        await myPage
-          .locator(selectorConfig.pageInfo.nbFollowers)
-          .first()
-          .textContent(),
-      );
-    } catch (error) {
-      this.logger.error(
-        pseudo +
-          " : impossible d'effectuer le selecteur '" +
-          selectorConfig.pageInfo.nbFollowers +
-          "'",
-      );
-    }
-
-    try {
-      const nbFollowingString = await myPage
-        .locator(selectorConfig.pageInfo.nbFollowing)
-        .first()
-        .textContent();
-      user.nbFollowing = await this.parseNumberFromString(nbFollowingString);
-    } catch (error) {
-      this.logger.error(
-        pseudo +
-          " : impossible d'effectuer le selecteur '" +
-          selectorConfig.pageInfo.nbFollowing +
-          "'",
-      );
-    }
-
-    try {
-      user.name = await myPage
-        .locator(selectorConfig.pageInfo.name)
-        .first()
-        .textContent();
-    } catch (error) {
-      this.logger.error(
-        pseudo +
-          " : impossible d'effectuer le selecteur '" +
-          selectorConfig.pageInfo.name +
-          "'",
-      );
-    }
-
-    try {
-      user.biography = await myPage
-        .locator(selectorConfig.pageInfo.biography)
-        .first()
-        .textContent();
-    } catch (error) {
-      this.logger.error(
-        pseudo +
-          " : impossible d'effectuer le selecteur '" +
-          selectorConfig.pageInfo.biography +
-          "'",
-      );
-    }
-    user.hasInfo = true;
-    await myPage.close();
-    return user;
+    do {
+      // on test toute les 500 ms si le process est fini
+      await this.sleep(500);
+      if (endProcess) {
+        await myPage.close();
+        return user;
+      }
+    } while (!endProcess);
   }
 
   private async addFollowers(pseudo, userIds) {
@@ -482,7 +485,7 @@ export class ScrapingService implements IScrapingService {
         // maxId = Number(maxId) + Number(SIZE);
 
         if (i % parseInt(process.env.NB_FOLLOW_QUERY_PROCESS || '100') == 0) {
-          await this.sleep(5_000);
+          await this.sleep(2_000);
         }
         if (this.stopCallApi) {
           this.logger.debug('break');
@@ -490,7 +493,7 @@ export class ScrapingService implements IScrapingService {
         }
       }
 
-      this.logger.info('pseudo =' + pseudo + ' last max_id = ' + maxId);
+      this.logger.info('pseudo = ' + pseudo + ' , last max_id = ' + maxId);
 
       //await this.sleep(this.waitAfterActionLong);
       await this.page.waitForLoadState('domcontentloaded');
@@ -595,10 +598,12 @@ export class ScrapingService implements IScrapingService {
     )) as UserListResponse;
 
     if (responseData) {
+      // this.logger.debug(
+      //   'user follow = ' + responseData.users.map((user) => user.username),
+      // );
       this.logger.debug(
-        'user follow = ' + responseData.users.map((user) => user.username),
+        'pseudo = ' + pseudo + '  next_max_id = ' + responseData.next_max_id,
       );
-      this.logger.debug('next_max_id = ' + responseData.next_max_id);
       this.stopCallApi = !responseData.big_list;
       const usersNames = [];
       //sauvegarde des element un bdd
