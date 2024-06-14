@@ -18,13 +18,35 @@ export class User {
     nbFollowers: number | null
 
     @Column('int', { nullable: true })
-    nbFollowing: number | null
+    nbFollowings: number | null
+
+    @Column('int', { nullable: true })
+    nbPublications: number | null
+
+    @Column('bigint', { nullable: true })
+    intagramId: number | null
+
+    @Column('bigint', { nullable: true })
+    facebookId: number | null
+
+    @Column('varchar', { nullable: true })
+    category: string | null
+
+    @Column('varchar', { nullable: true })
+    externalUrl: string | null
+
+    @Column('varchar', { nullable: true })
+    profileUrl: string | null
 
     @Column('boolean', {default: false})
     hasInfo: boolean
 
     @Column('boolean', {default: false})
     hasProcess: boolean
+
+    @Column('boolean', {default: true})
+    enable: boolean
+
 
 
     @ManyToMany((type) => User, (user) => user.followers, {

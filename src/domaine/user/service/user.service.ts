@@ -55,6 +55,7 @@ export class UserService implements IUserService {
       const users = await this.userRepository
         .createQueryBuilder('user')
         .innerJoinAndSelect('user.hobbies', 'hobby') // Utilise innerJoin pour garantir la présence de hobbies
+        .select(['user', 'COUNT(hobby.id) as hobbyCount'])
         .groupBy('user.id') // Regroupe les résultats par utilisateur
         .having('COUNT(hobby.id) > 0') // S'assure que chaque utilisateur a au moins un hobby
         .getMany();
@@ -71,6 +72,7 @@ export class UserService implements IUserService {
       const users = await this.userRepository
         .createQueryBuilder('user')
         .innerJoinAndSelect('user.hobbies', 'hobby')
+        .select(['user', 'COUNT(hobby.id) as hobbyCount'])
         .where('hobby.name IN (:...hobbies)', { hobbies: hobbiesList }) // Filtrage basé sur les noms de hobbies
         .groupBy('user.id')
         .having('COUNT(hobby.id) > 0')
@@ -84,13 +86,18 @@ export class UserService implements IUserService {
   }
 
   async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.userRepository.find({
+      where: {
+        enable: true
+      },
+    });
   }
 
   async findAllWithNoInfo(): Promise<User[]> {
     return this.userRepository.find({
       where: {
         hasInfo: false,
+        enable: true
       },
     });
   }

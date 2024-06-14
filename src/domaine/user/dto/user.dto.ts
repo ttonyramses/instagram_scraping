@@ -5,7 +5,14 @@ export class UserDto {
   name?: string;
   biography?: string;
   nbFollowers?: number;
-  nbFollowing?: number;
+  nbFollowings?: number;
+  nbPublications?: number;
+  intagramId?: number;
+  facebookId?: number;
+  category?: string;
+  externalUrl?: string;
+  profileUrl?: string;
   hasInfo?: boolean;
   hasProcess?: boolean;
+  enable?: boolean;
 }

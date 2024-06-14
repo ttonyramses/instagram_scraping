@@ -1,21 +1,22 @@
-mail: papa_yougo_star1@yopmail.com
-pseudo: papa_yougo_star1
-pwd: pwd_papa_yougo_star1
+mail: mbaga_yougo_star1@yopmail.com
+pseudo: mbaga_yougo_star1
+pwd: pwd_mbaga_yougo_star1
 
 
-mail: papa_yougo_star2@yopmail.com
-pseudo: papa_yougo_star2
-pwd: pwd_papa_yougo_star2
+mail: mbaga_yougo_star2@yopmail.com
+pseudo: mbaga_yougo_star2
+pwd: pwd_mbaga_yougo_star2
 
 
-mail: papa_yougo_star3@yopmail.com
-pseudo: papa_yougo_star3
-pwd: pwd_papa_yougo_star3
+mail: bo_goos_paris@yopmail.com
+pseudo: bo_goos_paris
+pwd: 4587bo_goos_paris_!
 
-mail: papa_yougo_star4@yopmail.com  
-pseudo: papa_yougo_star4
-pwd: pwd_papa_yougo_star4
 
-mail: papa_yougo_star5@yopmail.com
-pseudo: papa_yougo_star5
-pwd: pwd_papa_yougo_star5
+mail: mariana_beauty_god@yopmail.com
+pseudo: mariana_beauty_god
+pwd: !mariana_of_god
+
+mail: papi_sanchez_456@yopmail.com
+pseudo: papi_sanchez_456
+pwd: 1968papi_sanchez_456_;

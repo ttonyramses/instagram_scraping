@@ -1,11 +1,10 @@
 {
   "pageInfo": {
+
     "id": "main.xvbhtw8 header.xrvj5dj section.x1xdureb div.x9f619",
     "nbFollowers": "main.xvbhtw8 header.xrvj5dj section.x18z9r2k ul li:nth-child(2) span._ac2a",
-    "nbFollowing": "main.xvbhtw8 header.xrvj5dj section.x18z9r2k ul li:nth-child(3) span._ac2a",
-    "name": "main.xvbhtw8 header.xrvj5dj section.x14tfgiu div.x7a106z span.x1lliihq",
-    "biography": "main.xvbhtw8 header.xrvj5dj section.x14tfgiu div.x7a106z h1",
-    "buttonFollower": "main.xvbhtw8 header.xrvj5dj section ul li:nth-child(2) a.x1i10hfl",
-    "buttonFollowing": "main.xvbhtw8 header.xrvj5dj section ul li:nth-child(3) a.x1i10hfl"
+    "nbFollowings": "main.xvbhtw8 header.xrvj5dj section.x18z9r2k ul li:nth-child(3) span._ac2a",
+    "buttonAuthoriseCookies": "div[role='dialog'] button._a9--._ap36._a9_0"
+
   }
 }
