@@ -14,11 +14,13 @@ program
   .description('scrap user information and save to database')
   .option('-u, --users [value...]', 'user or list of user to process')
   .option('-f, --force', 'force processing')
+  .option('-c, --cookies <type>', 'file of cookies in .json',)
   .option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
   .action(async (options) => {
     await bootstrap(async (scrapingService) => {
       await scrapingService.getAllInfos(
         options.force ?? false,
+        options.cookies,
         options.selectors,
         options.users,
       );

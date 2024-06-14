@@ -28,7 +28,7 @@ export class ScrapingService implements IScrapingService {
   private baseUrl: string;
   private waitAfterActionLong: number;
   private waitAfterActionShort: number;
-  private nbFollowProcess: number;
+  private nbItemProcess: number;
   private stopCallApi: boolean;
   private lock = new Lock();
   private allFollowProcess = new Set();
@@ -73,10 +73,12 @@ export class ScrapingService implements IScrapingService {
 
   async getAllInfos(
     force: boolean,
+    cookiesFileName: string,
     selectorsFileName: string,
     pseudoList?: string[],
   ): Promise<void> {
-    await this.initBrowser('/', chromium, undefined, selectorsFileName);
+    this.nbItemProcess = 0;
+    await this.initBrowser('/', chromium, cookiesFileName, selectorsFileName);
     if (pseudoList && pseudoList.length > 0) {
       for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
@@ -92,8 +94,7 @@ export class ScrapingService implements IScrapingService {
           );
           continue;
         } else {
-          this.getAndSaveInfoUser(pseudo);
-          await this.sleep(5_000);
+          await this.getAndSaveInfoUser(pseudo);
         }
       }
     } else {
@@ -115,13 +116,14 @@ export class ScrapingService implements IScrapingService {
       let indexBloc = 0;
       for (let i = 0; i < users.length; i += blockSize) {
         indexBloc++;
-        // Extraire un bloc de 50 éléments
         let block_users = users.slice(i, i + blockSize);
         this.logger.info(
           'start init Tasks for getAllInfo User block N° ' + indexBloc,
         );
         const tasks = block_users.map((user) => {
-          return pool.queue((worker) => this.getAndSaveInfoUser(user.id));
+          return pool.queue(
+            async (worker) => await this.getAndSaveInfoUser(user.id),
+          );
         });
         this.logger.info(
           'end init Tasks for getAllInfo User block N° ' + indexBloc,
@@ -131,10 +133,11 @@ export class ScrapingService implements IScrapingService {
         await pool.completed();
         await pool.terminate();
       }
-      await this.sleep(20_000);
     }
-
     await this.closeBrowser();
+    this.logger.info(
+      'Nombre total des utilisateurs mise à jour : ' + this.nbItemProcess,
+    );
   }
 
   private async getAndSaveInfoUser(pseudo: string) {
@@ -143,6 +146,24 @@ export class ScrapingService implements IScrapingService {
     if (userDto.nbFollowers != undefined && userDto.nbFollowings != undefined) {
       await this.userService.save(userDto);
     }
+    this.nbItemProcess++;
+    if (
+      this.nbItemProcess %
+        parseInt(process.env.NB_FOLLOW_LOG_PROCESS || '1000') ==
+      0
+    ) {
+      this.logger.info(
+        'Nombre des utilisateurs mise à jour : ' + this.nbItemProcess,
+      );
+    }
+    if (
+      this.nbItemProcess == parseInt(process.env.MAX_USER_UPDATE || '50000')
+    ) {
+      throw new Error(
+        `Nombre maximal de utilisateur a traiter atteint soit (${this.nbItemProcess}), fin du programme`,
+      );
+    }
+    await this.sleep(this.getRandomNumber(3000, 12000));
   }
 
   async getAllFollow(
@@ -364,16 +385,17 @@ export class ScrapingService implements IScrapingService {
               `erreur get response for url ${request.url()} error: ${error.message}`,
             );
           }
-        } else if (
-          request.resourceType() === 'xhr' &&
-          matchBulkRoute &&
-          !hasGetInfo
-        ) {
-          this.logger.info(`${pseudo} : ce pseudo est certainement desactivé`);
-          user.nbFollowers = 0;
-          user.nbFollowings = 0;
-          user.enable = false;
-          user.hasInfo = true;
+        } else if (request.resourceType() === 'xhr' && matchBulkRoute) {
+          await this.sleep(2_000);
+          if (!hasGetInfo) {
+            this.logger.info(
+              `${pseudo} : ce pseudo est certainement desactivé`,
+            );
+            user.nbFollowers = 0;
+            user.nbFollowings = 0;
+            user.enable = false;
+            user.hasInfo = true;
+          }
         } else if (request.resourceType() === 'xhr' && matchLoginPage) {
           this.logger.info(`Vous êtes deja blacklistés par instagram`);
           throw new Error('Veuillez changer de poste ou de IP');
@@ -472,7 +494,7 @@ export class ScrapingService implements IScrapingService {
     }).then(async (option: { url: string; headers: any }) => {
       //c'est ici qu'on va faire tous les appel api
 
-      this.nbFollowProcess = 0;
+      this.nbItemProcess = 0;
       const nbQuery = Math.ceil(nbFollow / SIZE);
       this.stopCallApi = false;
       this.logger.debug('nbQuery =' + nbQuery);
@@ -505,7 +527,7 @@ export class ScrapingService implements IScrapingService {
 
       if (follow == Follow.FOLLOWER) {
         this.logger.info(
-          'Nombre total de followers traités ' + this.nbFollowProcess,
+          'Nombre total de followers traités ' + this.nbItemProcess,
         );
         this.logger.info(
           'Nombre total de followers sauvegardé en bdd ' +
@@ -513,7 +535,7 @@ export class ScrapingService implements IScrapingService {
         );
       } else {
         this.logger.info(
-          'Nombre total de followings traités ' + this.nbFollowProcess,
+          'Nombre total de followings traités ' + this.nbItemProcess,
         );
         this.logger.info(
           'Nombre total de followings sauvegardé en bdd ' +
@@ -611,20 +633,20 @@ export class ScrapingService implements IScrapingService {
         try {
           usersNames.push(user.username);
           this.allFollowProcess.add(user.username);
-          this.nbFollowProcess++;
+          this.nbItemProcess++;
 
           if (
-            this.nbFollowProcess %
+            this.nbItemProcess %
               parseInt(process.env.NB_FOLLOW_LOG_PROCESS || '1000') ==
             0
           ) {
             if (follow == Follow.FOLLOWER) {
               this.logger.info(
-                'Nombre de followers traités ' + this.nbFollowProcess,
+                'Nombre de followers traités ' + this.nbItemProcess,
               );
             } else {
               this.logger.info(
-                'Nombre de followings traités ' + this.nbFollowProcess,
+                'Nombre de followings traités ' + this.nbItemProcess,
               );
             }
             this.logger.info('next_max_id = ' + responseData.next_max_id);
@@ -661,5 +683,14 @@ export class ScrapingService implements IScrapingService {
         resolve(); // Résoudre la promesse après le délai spécifié
       }, timeMilliSeconde);
     });
+  }
+
+  private getRandomNumber(min: number = 0, max: number = 100): number {
+    if (min >= max) {
+      throw new Error(
+        "Le paramètre 'min' doit être strictement inférieur à 'max'.",
+      );
+    }
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }
