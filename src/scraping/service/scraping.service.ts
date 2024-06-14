@@ -142,9 +142,12 @@ export class ScrapingService implements IScrapingService {
 
   private async getAndSaveInfoUser(pseudo: string) {
     const userDto = await this.getInfoUserOnPage(pseudo);
-    this.logger.info(`userDto = ${JSON.stringify(userDto)}`);
+
     if (userDto.nbFollowers != undefined && userDto.nbFollowings != undefined) {
+      this.logger.info(`save userDto = ${JSON.stringify(userDto)}`);
       await this.userService.save(userDto);
+    } else {
+      this.logger.info(`not save userDto = ${JSON.stringify(userDto)}`);
     }
     this.nbItemProcess++;
     if (
@@ -356,29 +359,44 @@ export class ScrapingService implements IScrapingService {
 
     user.id = pseudo;
 
-    let endProcess = true;
+    let endProcess = false;
 
     new Promise((resolve, reject) => {
       let hasGetInfo = false;
-      myPage.on('request', async (request) => {
-        const regexGraphQl = /\/api\/graphql/;
+      myPage.on('response', async (response) => {
+        const request = response.request();
+        const regexGraphQl = /\/api\/graphql|\/graphql\/query/;
         const matchGraphQl = regexGraphQl.exec(request.url());
 
         const regexBulkRoute = /ajax\/bulk-route-definitions/;
         const matchBulkRoute = regexBulkRoute.exec(request.url());
 
-        const regexLoginPage = /\/api\/v1\/web\/login_page/;
+        const regexLoginPage = /\/api\/v1\/web\/login_page|\/accounts\/suspended/;
         const matchLoginPage = regexLoginPage.exec(request.url());
 
-        if (request.resourceType() === 'xhr' && matchGraphQl && !hasGetInfo) {
+        //console.log('request.resourceType() = ', request.resourceType(), '     request.url() = ', request.url());
+
+        if (request.resourceType() === 'xhr' && matchLoginPage) {
+          this.logger.info(`Vous êtes deja blacklistés par instagram`);
+          endProcess = true;
+          throw new Error('Veuillez changer de poste ou de IP');
+        } else if (request.resourceType() === 'xhr' && matchGraphQl && !hasGetInfo) {
+          const postData = request.postData();
+          const payload = new URLSearchParams(postData);
           try {
-            const response = await request.response();
-            const body = await response.json();
-            // this.logger.info(`body  ${pseudo}  = ${JSON.stringify(body)}`);
-            if (body.data.user != undefined) {
-              endProcess = false;
-              hasGetInfo = true;
-              resolve(body);
+            const variables = payload.get('variables');
+
+            if (variables) {
+              const variablesObj = JSON.parse(variables);
+              if (variablesObj.render_surface === 'PROFILE') {
+                const textBody = await response.text();
+                const body = JSON.parse(textBody);
+                if (body.data.user != undefined) {
+                  endProcess = false;
+                  hasGetInfo = true;
+                  resolve(body);
+                }
+              }
             }
           } catch (error) {
             this.logger.error(
@@ -395,13 +413,11 @@ export class ScrapingService implements IScrapingService {
             user.nbFollowings = 0;
             user.enable = false;
             user.hasInfo = true;
+            endProcess = true;
           }
-        } else if (request.resourceType() === 'xhr' && matchLoginPage) {
-          this.logger.info(`Vous êtes deja blacklistés par instagram`);
-          throw new Error('Veuillez changer de poste ou de IP');
-        }
+        } 
       });
-    }).then(async (response: UserProfileResponse) => {
+    }).then((response: UserProfileResponse) => {
       user.name = response.data.user.full_name;
       user.biography = response.data.user.biography;
       user.nbFollowers = response.data.user.follower_count;
