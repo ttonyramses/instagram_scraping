@@ -11,25 +11,15 @@ import { User } from '../../user/entity/user.entity';
 import { Hobby } from '../../hobby/entity/hobby.entity';
 
 
-@Entity({ name: 'weighting' })
-export class weighting {
+@Entity({ name: 'hobby_keywords' })
+@Unique(['hobby_id', 'keyword'])
+export class hobby_keywords {
 
-  @PrimaryGeneratedColumn()
-  id : number;
   
   @ManyToOne(() => Hobby)
-  hobby: Hobby;
+  hobby_id: Hobby;
 
-  
-  @ManyToOne(() => User)
-  user: User;
+  @Column('text', { nullable: true })
+  keyword: string | null 
 
-  @Column('int')
-  score: number;
-
-  @Column('int')
-  occurrences: number;
-
-  @Column('int')
-  hobby_in_bio: number;
 }
