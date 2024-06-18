@@ -1,11 +1,11 @@
 interface User {
-    pk: string;
-    pk_id: string;
-    id: string;
+    pk: number;
+    pk_id: number;
+    id: number;
     username: string;
     full_name: string;
     is_private: boolean;
-    fbid_v2: string;
+    fbid_v2: number;
     third_party_downloads_enabled: number;
     strong_id__: string;
     profile_pic_id?: string;

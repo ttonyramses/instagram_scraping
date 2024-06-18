@@ -1,10 +1,7 @@
 {
   "pageInfo": {
-
-    "id": "main.xvbhtw8 header.xrvj5dj section.x1xdureb div.x9f619",
-    "nbFollowers": "main.xvbhtw8 header.xrvj5dj section.x18z9r2k ul li:nth-child(2) span._ac2a",
-    "nbFollowings": "main.xvbhtw8 header.xrvj5dj section.x18z9r2k ul li:nth-child(3) span._ac2a",
-    "buttonAuthoriseCookies": "div[role='dialog'] button._a9--._ap36._a9_0"
-
+    "buttonAuthoriseCookies": "div[role='dialog'] button._a9--._ap36._a9_0",
+    "buttonFollower": "main.xvbhtw8 header section:nth-child(3) ul li:nth-child(2) div > a",
+    "buttonFollowing": "main.xvbhtw8 header section:nth-child(3) ul li:nth-child(3) div > a"
   }
 }

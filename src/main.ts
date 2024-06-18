@@ -48,7 +48,7 @@ program
         options.cookies,
         options.selectors,
         options.max_id??'0',
-        options.nb_follow??3000,
+        options.nb_follow??10000,
         options.hobbies,
         options.users,
       );
@@ -76,7 +76,7 @@ program
         options.cookies,
         options.selectors,
         options.max_id??'0',
-        options.nb_follow??10000,
+        options.nb_follow??5000,
         options.hobbies,
         options.users,
       );

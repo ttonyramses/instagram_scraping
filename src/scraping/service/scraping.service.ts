@@ -103,23 +103,24 @@ export class ScrapingService implements IScrapingService {
         : await this.userService.findAllWithNoInfo();
       let i = 0;
 
-      const pool = Pool(
-        () => spawn(new Worker('../multithreading/worker')),
-        parseInt(
-          process.env.NB_THREAD_GET_INFO_USER || '10',
-        ) /* optional size */,
-      );
-
       const blockSize = parseInt(
         process.env.BLOCK_SIZE_THREAD_GET_INFO_USER || '5000',
       );
       let indexBloc = 0;
+      this.logger.info('nombre compte à traiter :  ' + users.length);
       for (let i = 0; i < users.length; i += blockSize) {
         indexBloc++;
         let block_users = users.slice(i, i + blockSize);
         this.logger.info(
           'start init Tasks for getAllInfo User block N° ' + indexBloc,
         );
+        const pool = Pool(
+          () => spawn(new Worker('../multithreading/worker')),
+          parseInt(
+            process.env.NB_THREAD_GET_INFO_USER || '10',
+          ) /* optional size */,
+        );
+
         const tasks = block_users.map((user) => {
           return pool.queue(
             async (worker) => await this.getAndSaveInfoUser(user.id),
@@ -130,10 +131,11 @@ export class ScrapingService implements IScrapingService {
         );
 
         await Promise.all(tasks);
-        await pool.completed();
+        //await pool.completed();
         await pool.terminate();
       }
     }
+    //await this.sleep(500_000);
     await this.closeBrowser();
     this.logger.info(
       'Nombre total des utilisateurs mise à jour : ' + this.nbItemProcess,
@@ -166,7 +168,7 @@ export class ScrapingService implements IScrapingService {
         `Nombre maximal de utilisateur a traiter atteint soit (${this.nbItemProcess}), fin du programme`,
       );
     }
-    await this.sleep(this.getRandomNumber(3000, 12000));
+   // await this.sleep(this.getRandomNumber(500, 1500));
   }
 
   async getAllFollow(
@@ -371,16 +373,23 @@ export class ScrapingService implements IScrapingService {
         const regexBulkRoute = /ajax\/bulk-route-definitions/;
         const matchBulkRoute = regexBulkRoute.exec(request.url());
 
-        const regexLoginPage = /\/api\/v1\/web\/login_page|\/accounts\/suspended/;
+        const regexLoginPage =
+          /\/api\/v1\/web\/login_page|\/accounts\/suspended/;
         const matchLoginPage = regexLoginPage.exec(request.url());
+
+        let isBlacklisted = false;
 
         //console.log('request.resourceType() = ', request.resourceType(), '     request.url() = ', request.url());
 
         if (request.resourceType() === 'xhr' && matchLoginPage) {
-          this.logger.info(`Vous êtes deja blacklistés par instagram`);
+          this.logger.info('Vous êtes déjà blacklistés par instagram');
           endProcess = true;
           throw new Error('Veuillez changer de poste ou de IP');
-        } else if (request.resourceType() === 'xhr' && matchGraphQl && !hasGetInfo) {
+        } else if (
+          request.resourceType() === 'xhr' &&
+          matchGraphQl &&
+          !hasGetInfo
+        ) {
           const postData = request.postData();
           const payload = new URLSearchParams(postData);
           try {
@@ -389,12 +398,16 @@ export class ScrapingService implements IScrapingService {
             if (variables) {
               const variablesObj = JSON.parse(variables);
               if (variablesObj.render_surface === 'PROFILE') {
-                const textBody = await response.text();
-                const body = JSON.parse(textBody);
-                if (body.data.user != undefined) {
-                  endProcess = false;
-                  hasGetInfo = true;
-                  resolve(body);
+                if (response.status() === 200) {
+                  const textBody = await response.text();
+                  const body = JSON.parse(textBody);
+                  if (body.data.user != undefined) {
+                    endProcess = false;
+                    hasGetInfo = true;
+                    resolve(body);
+                  }
+                } else {
+                  isBlacklisted = true;
                 }
               }
             }
@@ -403,10 +416,16 @@ export class ScrapingService implements IScrapingService {
               `erreur get response for url ${request.url()} error: ${error.message}`,
             );
           }
+
+          if (isBlacklisted) {
+            this.logger.info('Vous êtes déjà blacklistés par instagram');
+            throw new Error('Veuillez changer de poste ou de IP');
+            endProcess = true;
+          }
         } else if (request.resourceType() === 'xhr' && matchBulkRoute) {
           await this.sleep(2_000);
           if (!hasGetInfo) {
-            this.logger.info(
+            this.logger.debug(
               `${pseudo} : ce pseudo est certainement desactivé`,
             );
             user.nbFollowers = 0;
@@ -415,7 +434,7 @@ export class ScrapingService implements IScrapingService {
             user.hasInfo = true;
             endProcess = true;
           }
-        } 
+        }
       });
     }).then((response: UserProfileResponse) => {
       user.name = response.data.user.full_name;
@@ -450,24 +469,12 @@ export class ScrapingService implements IScrapingService {
     } while (!endProcess);
   }
 
-  private async addFollowers(pseudo, userIds) {
-    const users = userIds.map((id) => {
-      const user = new UserDto();
-      user.id = id;
-      return user;
-    });
-
+  private async addFollowers(pseudo, users) {
     await this.userService.saveAll(users);
     await this.userService.addFollowers(pseudo, users);
   }
 
-  private async addFollowings(pseudo, userIds) {
-    const users = userIds.map((id) => {
-      const user = new UserDto();
-      user.id = id;
-      return user;
-    });
-
+  private async addFollowings(pseudo, users) {
     await this.userService.saveAll(users);
     await this.userService.addFollowings(pseudo, users);
   }
@@ -579,6 +586,8 @@ export class ScrapingService implements IScrapingService {
       buttonFollow = selectorConfig.pageInfo.buttonFollowing;
     }
 
+    //await this.sleep(500_000);
+
     // Utilisez page.locator pour cibler le bouton plus précisément
     try {
       const buttonFollowLocator = await this.page.waitForSelector(
@@ -643,11 +652,16 @@ export class ScrapingService implements IScrapingService {
         'pseudo = ' + pseudo + '  next_max_id = ' + responseData.next_max_id,
       );
       this.stopCallApi = !responseData.big_list;
-      const usersNames = [];
+      const users = [];
       //sauvegarde des element un bdd
       for (let user of responseData.users) {
         try {
-          usersNames.push(user.username);
+          const userDto = new UserDto();
+          userDto.id = user.username;
+          userDto.facebookId = user.fbid_v2
+          userDto.intagramId = user.pk;
+          userDto.name = user.full_name
+          users.push(userDto);
           this.allFollowProcess.add(user.username);
           this.nbItemProcess++;
 
@@ -678,9 +692,9 @@ export class ScrapingService implements IScrapingService {
       try {
         // console.log('userNames =',usersNames)
         if (follow == Follow.FOLLOWER) {
-          await this.addFollowers(pseudo, usersNames);
+          await this.addFollowers(pseudo, users);
         } else {
-          await this.addFollowings(pseudo, usersNames);
+          await this.addFollowings(pseudo, users);
         }
       } finally {
         //console.log('releases lock')
