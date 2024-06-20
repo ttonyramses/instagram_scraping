@@ -7,7 +7,7 @@ export class UserDto {
   nbFollowers?: number;
   nbFollowings?: number;
   nbPublications?: number;
-  intagramId?: number;
+  instagramId?: number;
   facebookId?: number;
   category?: string;
   externalUrl?: string;

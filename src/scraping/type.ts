@@ -47,7 +47,31 @@ interface User {
         external_url: string;
       };
     };
+  }
 
+  export interface User2ProfileResponse {
+    data: {
+      user: {
+        username: string;
+        full_name: string;
+        biography: string;
+        edge_follow: {
+          count: number;
+        };
+        edge_followed_by: {
+          count: number;
+        };
+        edge_owner_to_timeline_media: {
+          count: number;
+        };
+        id: number;
+        fbid: number;
+        category_name: string;
+        profile_pic_url: string;
+        profile_pic_url_hd: string;
+        external_url: string;
+      };
+    };
   }
   
 

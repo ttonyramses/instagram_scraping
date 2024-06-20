@@ -23,7 +23,7 @@ export class User {
   nbPublications: number | null;
 
   @Column('bigint', { nullable: true })
-  intagramId: number | null;
+  instagramId: number | null;
 
   @Column('bigint', { nullable: true })
   facebookId: number | null;

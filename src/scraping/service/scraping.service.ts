@@ -16,7 +16,7 @@ import {
 import { UserDto } from '../../domaine/user/dto/user.dto';
 import { Logger } from 'winston';
 import { Lock } from 'async-await-mutex-lock';
-import { Follow, UserListResponse, UserProfileResponse } from '../type';
+import { Follow, User2ProfileResponse, UserListResponse, UserProfileResponse } from '../type';
 import { User } from 'src/domaine/user/entity/user.entity';
 import { Pool, Worker, spawn } from 'threads';
 
@@ -32,6 +32,9 @@ export class ScrapingService implements IScrapingService {
   private stopCallApi: boolean;
   private lock = new Lock();
   private allFollowProcess = new Set();
+  private headersRequest: { [key: string]: string; };
+  private bodyRequest: URLSearchParams;
+  private urlRequest: string;
 
   constructor(
     @inject(TYPES.IUserService) private readonly userService: IUserService,
@@ -78,7 +81,12 @@ export class ScrapingService implements IScrapingService {
     pseudoList?: string[],
   ): Promise<void> {
     this.nbItemProcess = 0;
-    await this.initBrowser('/', chromium, cookiesFileName, selectorsFileName);
+    await this.initBrowser(
+      '/topchretien',
+      chromium,
+      cookiesFileName,
+      selectorsFileName,
+    );
     if (pseudoList && pseudoList.length > 0) {
       for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
@@ -94,7 +102,7 @@ export class ScrapingService implements IScrapingService {
           );
           continue;
         } else {
-          await this.getAndSaveInfoUser(pseudo);
+          await this.getAndSaveInfoUser(user);
         }
       }
     } else {
@@ -123,7 +131,7 @@ export class ScrapingService implements IScrapingService {
 
         const tasks = block_users.map((user) => {
           return pool.queue(
-            async (worker) => await this.getAndSaveInfoUser(user.id),
+            async (worker) => await this.getAndSaveInfoUser(user),
           );
         });
         this.logger.info(
@@ -142,8 +150,15 @@ export class ScrapingService implements IScrapingService {
     );
   }
 
-  private async getAndSaveInfoUser(pseudo: string) {
-    const userDto = await this.getInfoUserOnPage(pseudo);
+  private async getAndSaveInfoUser(user: UserDto) {
+    let userDto;
+
+    if (user.instagramId) {
+      userDto = await this.getInfoUserByApi(user.instagramId, user.id);
+    } else {
+      return ;
+      userDto = await this.getInfoUserOnPage(user.id);
+    }
 
     if (userDto.nbFollowers != undefined && userDto.nbFollowings != undefined) {
       this.logger.debug(`save userDto = ${JSON.stringify(userDto)}`);
@@ -168,7 +183,176 @@ export class ScrapingService implements IScrapingService {
         `Nombre maximal de utilisateur a traiter atteint soit (${this.nbItemProcess}), fin du programme`,
       );
     }
-   // await this.sleep(this.getRandomNumber(500, 1500));
+    // await this.sleep(this.getRandomNumber(500, 1500));
+  }
+
+  private async getInfoUserByApi(instagramId: number, pseudo:string): Promise<UserDto> {
+    // const variables = `{"id":"${instagramId}","render_surface":"PROFILE"}`;
+    // const __spin_t = Math.floor(Date.now() / 1000);
+    // this.bodyRequest.set('variables', variables);
+    // this.bodyRequest.set('__spin_t', __spin_t.toString());
+    // console.log('urlRequest = ', this.urlRequest)
+    console.log('headersRequest = ', this.headersRequest)
+    //console.log("this.headersRequest['x-csrftoken']", this.headersRequest['x-csrftoken'])
+    //console.log("this.headersRequest['cookie']", this.headersRequest['cookie'])
+    // console.log('bodyRequest = ', this.bodyRequest)
+
+    const {cookie, 'x-csrftoken': csrfToken} = this.headersRequest
+    const headers = {cookie, 'x-csrftoken' : csrfToken}
+    //headers[':method'] = 'GET'
+    //delete headers['cookie']
+    headers['referer'] = `https://www.instagram.com/${pseudo}/`
+    //headers[':path'] = `/api/v1/users/web_profile_info/?username=${pseudo}`
+    console.log("headers = ", headers);
+    const response = await fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${pseudo}`, {
+      
+      method: 'GET',
+      headers: headers
+    });
+    const user = new UserDto();
+    
+    if (!response.ok && response.status !== 400) {
+      this.logger.error(`pseudo ${pseudo} : erreur http ${response.status}`)
+      return user;
+    } else {
+      this.logger.info(`pseudo ${pseudo} : status http ${response.status} OK`)
+    }
+
+    const userResponse = await response.json();
+
+    console.log("userResponse = ", userResponse)
+    
+    user.id = userResponse.data.user.username;
+    user.name = userResponse.data.user.full_name;
+    user.biography = userResponse.data.user.biography;
+    user.nbFollowers = userResponse.data.user.edge_followed_by.count;
+    user.nbFollowings = userResponse.data.user.edge_follow.count;
+    user.nbPublications = userResponse.data.user.edge_owner_to_timeline_media.count;
+    user.instagramId = userResponse.data.user.id;
+    user.facebookId = userResponse.data.user.fbid;
+    user.category = userResponse.data.user.category_name;
+    user.externalUrl = userResponse.data.user.external_url;
+    user.profileUrl = userResponse.data.user.profile_pic_url_hd;
+    user.hasInfo = true;
+    user.enable = true;
+
+    console.log("user = ", user);
+    return new UserDto();
+  }
+
+  private async getInfoUserOnPage(pseudo: string): Promise<UserDto> {
+    const user = new UserDto();
+    const url = this.baseUrl + '/' + pseudo;
+    const myPage: Page = await this.context.newPage();
+
+    user.id = pseudo;
+
+    let endProcess = false;
+
+    new Promise((resolve, reject) => {
+      let hasGetInfo = false;
+      myPage.on('response', async (response) => {
+        const request = response.request();
+        const regexGraphQl = /\/api\/graphql|\/graphql\/query/;
+        const matchGraphQl = regexGraphQl.exec(request.url());
+
+        const regexBulkRoute = /ajax\/bulk-route-definitions/;
+        const matchBulkRoute = regexBulkRoute.exec(request.url());
+
+        const regexLoginPage =
+          /\/api\/v1\/web\/login_page|\/accounts\/suspended/;
+        const matchLoginPage = regexLoginPage.exec(request.url());
+
+        let isBlacklisted = false;
+
+        //console.log('request.resourceType() = ', request.resourceType(), '     request.url() = ', request.url());
+
+        if (request.resourceType() === 'xhr' && matchLoginPage) {
+          this.logger.info('Vous êtes déjà blacklistés par instagram');
+          endProcess = true;
+          throw new Error('Veuillez changer de poste ou de IP');
+        } else if (
+          request.resourceType() === 'xhr' &&
+          matchGraphQl &&
+          !hasGetInfo
+        ) {
+          const postData = request.postData();
+          const payload = new URLSearchParams(postData);
+          try {
+            const variables = payload.get('variables');
+
+            if (variables) {
+              const variablesObj = JSON.parse(variables);
+              if (variablesObj.render_surface === 'PROFILE') {
+                if (response.status() === 200) {
+                  const textBody = await response.text();
+                  const body = JSON.parse(textBody);
+                  if (body.data.user != undefined) {
+                    endProcess = false;
+                    hasGetInfo = true;
+                    resolve(body);
+                  }
+                } else {
+                  isBlacklisted = true;
+                }
+              }
+            }
+          } catch (error) {
+            this.logger.error(
+              `erreur get response for url ${request.url()} error: ${error.message}`,
+            );
+          }
+
+          if (isBlacklisted) {
+            this.logger.info('Vous êtes déjà blacklistés par instagram');
+            throw new Error('Veuillez changer de poste ou de IP');
+            endProcess = true;
+          }
+        } else if (request.resourceType() === 'xhr' && matchBulkRoute) {
+          await this.sleep(2_000);
+          if (!hasGetInfo) {
+            this.logger.debug(
+              `${pseudo} : ce pseudo est certainement desactivé`,
+            );
+            user.nbFollowers = 0;
+            user.nbFollowings = 0;
+            user.enable = false;
+            user.hasInfo = true;
+            endProcess = true;
+          }
+        }
+      });
+    }).then((response: UserProfileResponse) => {
+      user.name = response.data.user.full_name;
+      user.biography = response.data.user.biography;
+      user.nbFollowers = response.data.user.follower_count;
+      user.nbFollowings = response.data.user.following_count;
+      user.nbPublications = response.data.user.media_count;
+      user.instagramId = response.data.user.pk;
+      user.facebookId = response.data.user.fbid_v2;
+      user.category = response.data.user.category;
+      user.externalUrl = response.data.user.external_url;
+      user.profileUrl = response.data.user.hd_profile_pic_url_info.url;
+      user.hasInfo = true;
+      user.enable = true;
+      endProcess = true;
+    });
+
+    try {
+      await myPage.goto(url);
+    } catch (error) {
+      this.logger.error(`erreur go to page ${url} ${error.message}`);
+      return user;
+    }
+
+    do {
+      // on test toute les 500 ms si le process est fini
+      await this.sleep(500);
+      if (endProcess) {
+        await myPage.close();
+        return user;
+      }
+    } while (!endProcess);
   }
 
   async getAllFollow(
@@ -181,7 +365,7 @@ export class ScrapingService implements IScrapingService {
     hobbies?: string[],
     pseudoList?: string[],
   ): Promise<void> {
-    await this.initBrowser('/', chromium, cookiesFileName);
+    await this.initBrowser('/topchretien', chromium, cookiesFileName);
     if (pseudoList && pseudoList.length > 0) {
       for (const pseudo of pseudoList) {
         const user = await this.userService.findOneUser(pseudo);
@@ -316,8 +500,84 @@ export class ScrapingService implements IScrapingService {
 
     this.page = await this.context.newPage();
 
+    let endProcess = false;
+    let hasGetInfo = false;
+    let reload = false;
+    this.page.on('response', async (response) => {
+      const request = response.request();
+      //console.log(request.url());
+      const regexGraphQl = /\/api\/graphql|\/graphql\/query/;
+      const matchGraphQl = regexGraphQl.exec(request.url());
+
+      const regexLoginSuspendedPage =
+        /\/api\/v1\/web\/login_page|\/accounts\/suspended|\/accounts\/login/;
+      const matchLoginSuspendedPage = regexLoginSuspendedPage.exec(
+        request.url(),
+      );
+
+      const regexReloadUrl = /\/ajax\/bz/;
+      const matchReloadUrl = regexReloadUrl.exec(request.url());
+
+      let isBlacklisted = false;
+
+      //console.log('request.resourceType() = ', request.resourceType(), '     request.url() = ', request.url());
+
+      if (request.resourceType() === 'xhr' && matchLoginSuspendedPage) {
+        this.logger.info('Vous êtes déjà blacklistés par instagram');
+        endProcess = true;
+        throw new Error('Veuillez changer de poste ou de IP');
+      } else if (
+        request.resourceType() === 'xhr' &&
+        matchGraphQl &&
+        !hasGetInfo
+      ) {
+        const postData = request.postData();
+        const payload = new URLSearchParams(postData);
+        try {
+          const variables = payload.get('variables');
+
+          if (variables) {
+            const variablesObj = JSON.parse(variables);
+            if (variablesObj.render_surface === 'PROFILE') {
+              if (response.status() === 200) {
+                this.headersRequest = await request.allHeaders();
+                this.bodyRequest = payload;
+                this.urlRequest = request.url();
+
+                endProcess = true;
+                hasGetInfo = true;
+              } else {
+                isBlacklisted = true;
+                endProcess = true;
+              }
+            }
+          }
+        } catch (error) {
+          this.logger.error(
+            `erreur get response for url ${request.url()} error: ${error.message}`,
+          );
+        }
+
+        if (isBlacklisted) {
+          this.logger.info('Vous êtes déjà blacklistés par instagram');
+          throw new Error('Veuillez changer de poste ou de IP');
+          endProcess = true;
+        }
+      } else if (
+        request.resourceType() === 'xhr' &&
+        matchReloadUrl &&
+        !hasGetInfo
+      ) {
+        reload = true;
+      }
+    });
+
     const newUrl = this.baseUrl + (suiteUrl ? suiteUrl : '');
     await this.page.goto(newUrl); // Remplacez par l'URL désirée
+
+    if (reload) {
+      await this.page.goto(newUrl);
+    }
 
     await this.page.evaluate(() => {
       localStorage.clear();
@@ -347,126 +607,21 @@ export class ScrapingService implements IScrapingService {
       }
     }
 
-    this.logger.info('Lancement du navigateur OK');
+    do {
+      // on test toute les 500 ms si le process est fini
+      process.stdout.write('.');
+      await this.sleep(500);
+      if (endProcess) {
+        this.page.off('response', () => {});
+        // console.log('bodyREquest = ', this.bodyRequest);
+        this.logger.info('Lancement du navigateur OK');
+        return;
+      }
+    } while (!endProcess);
   }
 
   private async closeBrowser() {
     await this.browser.close();
-  }
-
-  private async getInfoUserOnPage(pseudo: string): Promise<UserDto> {
-    const user = new UserDto();
-    const url = this.baseUrl + '/' + pseudo;
-    const myPage: Page = await this.context.newPage();
-
-    user.id = pseudo;
-
-    let endProcess = false;
-
-    new Promise((resolve, reject) => {
-      let hasGetInfo = false;
-      myPage.on('response', async (response) => {
-        const request = response.request();
-        const regexGraphQl = /\/api\/graphql|\/graphql\/query/;
-        const matchGraphQl = regexGraphQl.exec(request.url());
-
-        const regexBulkRoute = /ajax\/bulk-route-definitions/;
-        const matchBulkRoute = regexBulkRoute.exec(request.url());
-
-        const regexLoginPage =
-          /\/api\/v1\/web\/login_page|\/accounts\/suspended/;
-        const matchLoginPage = regexLoginPage.exec(request.url());
-
-        let isBlacklisted = false;
-
-        //console.log('request.resourceType() = ', request.resourceType(), '     request.url() = ', request.url());
-
-        if (request.resourceType() === 'xhr' && matchLoginPage) {
-          this.logger.info('Vous êtes déjà blacklistés par instagram');
-          endProcess = true;
-          throw new Error('Veuillez changer de poste ou de IP');
-        } else if (
-          request.resourceType() === 'xhr' &&
-          matchGraphQl &&
-          !hasGetInfo
-        ) {
-          const postData = request.postData();
-          const payload = new URLSearchParams(postData);
-          try {
-            const variables = payload.get('variables');
-
-            if (variables) {
-              const variablesObj = JSON.parse(variables);
-              if (variablesObj.render_surface === 'PROFILE') {
-                if (response.status() === 200) {
-                  const textBody = await response.text();
-                  const body = JSON.parse(textBody);
-                  if (body.data.user != undefined) {
-                    endProcess = false;
-                    hasGetInfo = true;
-                    resolve(body);
-                  }
-                } else {
-                  isBlacklisted = true;
-                }
-              }
-            }
-          } catch (error) {
-            this.logger.error(
-              `erreur get response for url ${request.url()} error: ${error.message}`,
-            );
-          }
-
-          if (isBlacklisted) {
-            this.logger.info('Vous êtes déjà blacklistés par instagram');
-            throw new Error('Veuillez changer de poste ou de IP');
-            endProcess = true;
-          }
-        } else if (request.resourceType() === 'xhr' && matchBulkRoute) {
-          await this.sleep(2_000);
-          if (!hasGetInfo) {
-            this.logger.debug(
-              `${pseudo} : ce pseudo est certainement desactivé`,
-            );
-            user.nbFollowers = 0;
-            user.nbFollowings = 0;
-            user.enable = false;
-            user.hasInfo = true;
-            endProcess = true;
-          }
-        }
-      });
-    }).then((response: UserProfileResponse) => {
-      user.name = response.data.user.full_name;
-      user.biography = response.data.user.biography;
-      user.nbFollowers = response.data.user.follower_count;
-      user.nbFollowings = response.data.user.following_count;
-      user.nbPublications = response.data.user.media_count;
-      user.intagramId = response.data.user.pk;
-      user.facebookId = response.data.user.fbid_v2;
-      user.category = response.data.user.category;
-      user.externalUrl = response.data.user.external_url;
-      user.profileUrl = response.data.user.hd_profile_pic_url_info.url;
-      user.hasInfo = true;
-      user.enable = true;
-      endProcess = true;
-    });
-
-    try {
-      await myPage.goto(url);
-    } catch (error) {
-      this.logger.error(`erreur go to page ${url} ${error.message}`);
-      return user;
-    }
-
-    do {
-      // on test toute les 500 ms si le process est fini
-      await this.sleep(500);
-      if (endProcess) {
-        await myPage.close();
-        return user;
-      }
-    } while (!endProcess);
   }
 
   private async addFollowers(pseudo, users) {
@@ -488,7 +643,7 @@ export class ScrapingService implements IScrapingService {
   ) {
     this.page.on('console', (message) => {
       if (message.type() === 'error') {
-        this.logger.error(`Console error context page : ${message.text()}`);
+        this.logger.debug(`Console error context page : ${message.text()}`);
       } else {
         this.logger.debug(`Console context page : ${message.text()}`);
       }
@@ -586,7 +741,7 @@ export class ScrapingService implements IScrapingService {
       buttonFollow = selectorConfig.pageInfo.buttonFollowing;
     }
 
-    //await this.sleep(500_000);
+    // await this.sleep(500_000);
 
     // Utilisez page.locator pour cibler le bouton plus précisément
     try {
@@ -633,7 +788,9 @@ export class ScrapingService implements IScrapingService {
           });
 
           if (!response.ok) {
-            throw new Error('Error insta api ' + args.url);
+            throw new Error(
+              `${pseudo} : Error insta api follow by this url ${args.url}`,
+            );
           }
           const dataJson = await response.json();
           return dataJson;
@@ -658,9 +815,9 @@ export class ScrapingService implements IScrapingService {
         try {
           const userDto = new UserDto();
           userDto.id = user.username;
-          userDto.facebookId = user.fbid_v2
-          userDto.intagramId = user.pk;
-          userDto.name = user.full_name
+          userDto.facebookId = user.fbid_v2;
+          userDto.instagramId = user.pk;
+          userDto.name = user.full_name;
           users.push(userDto);
           this.allFollowProcess.add(user.username);
           this.nbItemProcess++;
