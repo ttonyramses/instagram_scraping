@@ -16,7 +16,7 @@ import {
 import { UserDto } from '../../domaine/user/dto/user.dto';
 import { Logger } from 'winston';
 import { Lock } from 'async-await-mutex-lock';
-import { Follow, User2ProfileResponse, UserListResponse, UserProfileResponse } from '../type';
+import { Follow, UserListResponse, UserProfileResponse } from '../type';
 import { User } from 'src/domaine/user/entity/user.entity';
 import { Pool, Worker, spawn } from 'threads';
 
@@ -157,7 +157,7 @@ export class ScrapingService implements IScrapingService {
       userDto = await this.getInfoUserByApi(user.instagramId, user.id);
     } else {
       return ;
-      userDto = await this.getInfoUserOnPage(user.id);
+     // userDto = await this.getInfoUserOnPage(user.id);
     }
 
     if (userDto.nbFollowers != undefined && userDto.nbFollowings != undefined) {
@@ -183,61 +183,50 @@ export class ScrapingService implements IScrapingService {
         `Nombre maximal de utilisateur a traiter atteint soit (${this.nbItemProcess}), fin du programme`,
       );
     }
-    // await this.sleep(this.getRandomNumber(500, 1500));
+    await this.sleep(this.getRandomNumber(500, 4000));
   }
 
   private async getInfoUserByApi(instagramId: number, pseudo:string): Promise<UserDto> {
-    // const variables = `{"id":"${instagramId}","render_surface":"PROFILE"}`;
-    // const __spin_t = Math.floor(Date.now() / 1000);
-    // this.bodyRequest.set('variables', variables);
-    // this.bodyRequest.set('__spin_t', __spin_t.toString());
+    const variables = `{"id":"${instagramId}","render_surface":"PROFILE"}`;
+    const __spin_t = Math.floor(Date.now() / 1000);
+    this.bodyRequest.set('variables', variables);
+    this.bodyRequest.set('__spin_t', __spin_t.toString());
     // console.log('urlRequest = ', this.urlRequest)
-    console.log('headersRequest = ', this.headersRequest)
-    //console.log("this.headersRequest['x-csrftoken']", this.headersRequest['x-csrftoken'])
-    //console.log("this.headersRequest['cookie']", this.headersRequest['cookie'])
+    // console.log('headersRequest = ', this.headersRequest)
     // console.log('bodyRequest = ', this.bodyRequest)
 
-    const {cookie, 'x-csrftoken': csrfToken} = this.headersRequest
-    const headers = {cookie, 'x-csrftoken' : csrfToken}
-    //headers[':method'] = 'GET'
-    //delete headers['cookie']
-    headers['referer'] = `https://www.instagram.com/${pseudo}/`
-    //headers[':path'] = `/api/v1/users/web_profile_info/?username=${pseudo}`
-    console.log("headers = ", headers);
-    const response = await fetch(`https://www.instagram.com/api/v1/users/web_profile_info/?username=${pseudo}`, {
-      
-      method: 'GET',
-      headers: headers
+    const response = await fetch(this.urlRequest, {
+      method: 'POST',
+      headers: this.headersRequest,
+      body: this.bodyRequest,
     });
     const user = new UserDto();
     
-    if (!response.ok && response.status !== 400) {
+    if (!response.ok) {
       this.logger.error(`pseudo ${pseudo} : erreur http ${response.status}`)
-      return user;
+      throw new Error(`pseudo ${pseudo} : Veuillez rapidement reactiver votre compte`);
     } else {
       this.logger.info(`pseudo ${pseudo} : status http ${response.status} OK`)
+      
     }
 
-    const userResponse = await response.json();
-
-    console.log("userResponse = ", userResponse)
+    const userResponse: UserProfileResponse = await response.json();
     
     user.id = userResponse.data.user.username;
     user.name = userResponse.data.user.full_name;
     user.biography = userResponse.data.user.biography;
-    user.nbFollowers = userResponse.data.user.edge_followed_by.count;
-    user.nbFollowings = userResponse.data.user.edge_follow.count;
-    user.nbPublications = userResponse.data.user.edge_owner_to_timeline_media.count;
-    user.instagramId = userResponse.data.user.id;
-    user.facebookId = userResponse.data.user.fbid;
-    user.category = userResponse.data.user.category_name;
+    user.nbFollowers = userResponse.data.user.follower_count;
+    user.nbFollowings = userResponse.data.user.following_count;
+    user.nbPublications = userResponse.data.user.media_count;
+    user.instagramId = userResponse.data.user.pk;
+    user.facebookId = userResponse.data.user.fbid_v2;
+    user.category = userResponse.data.user.category;
     user.externalUrl = userResponse.data.user.external_url;
-    user.profileUrl = userResponse.data.user.profile_pic_url_hd;
+    user.profileUrl = userResponse.data.user.hd_profile_pic_url_info.url;
     user.hasInfo = true;
     user.enable = true;
 
-    console.log("user = ", user);
-    return new UserDto();
+    return user;
   }
 
   private async getInfoUserOnPage(pseudo: string): Promise<UserDto> {
@@ -540,8 +529,10 @@ export class ScrapingService implements IScrapingService {
             const variablesObj = JSON.parse(variables);
             if (variablesObj.render_surface === 'PROFILE') {
               if (response.status() === 200) {
-                this.headersRequest = await request.allHeaders();
-                this.bodyRequest = payload;
+                const allHeaders = await request.allHeaders();
+                this.headersRequest = await request.headers();
+                this.headersRequest['cookie'] = allHeaders['cookie'];
+                                this.bodyRequest = payload;
                 this.urlRequest = request.url();
 
                 endProcess = true;
