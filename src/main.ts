@@ -128,8 +128,10 @@ async function bootstrap(
     });
   } catch (err) {
     logger.error('main error ', err);
-    await databaseService.closeConnection();
+   // await databaseService.closeConnection();
   } finally {
     await databaseService.closeConnection();
+    process.exit(0);
+    
   }
 }
