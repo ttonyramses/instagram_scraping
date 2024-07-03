@@ -27,6 +27,22 @@ program
     });
   });
 
+
+program
+.command('get-cookies')
+.description('')
+.option('-l, --logins [value...]', 'file of list logins')
+.option('-s, --selectors <type>', 'file of selector in .json', 'selectors.json')
+.action(async (options) => {
+  await bootstrap(async (scrapingService) => {
+    await scrapingService.getCookiesInfos(
+      options.logins,
+      options.selectors,
+    );
+  });
+});
+
+
 program
   .command('scrap-followers')
   .description('scrap followers and save to database')

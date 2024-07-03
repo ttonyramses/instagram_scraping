@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH=/home/tony/.nvm/versions/node/v20.11.1/bin:$PATH
+
 # Chemin du dossier à vérifier
 DIR="/home/tony/Dropbox/Notes/data/instagram_scraping/cookies"
 

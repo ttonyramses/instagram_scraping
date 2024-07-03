@@ -73,6 +73,11 @@ interface User {
       };
     };
   }
+
+  export interface  UserAuth {
+    login: string;
+    password: string;
+  }
   
 
   export enum Follow {
