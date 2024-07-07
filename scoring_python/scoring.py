@@ -258,7 +258,9 @@ def get_users_with_high_scores(df, hobbies):
 def extract_user_scoring(hobbies):
     engine = create_engine(database_url)
     hobbies = [remove_accents_and_capitalize(hobby) for hobby in hobbies]
-    hobbies.append("CHRISTIAN")
+
+
+    #hobbies.append("CHRISTIAN")
     query = """
     SELECT
         w."userId",
@@ -278,10 +280,19 @@ def extract_user_scoring(hobbies):
     pivot_df = get_users_with_high_scores(pivot_df, hobbies)
     hobbies.insert(0, 'userId')
     df = pivot_df[hobbies]
-    sorted_df = df.sort_values(by='CHRISTIAN', ascending=False)
-    sorted_df.to_excel('output_inst.xlsx', index=False, engine='openpyxl')
+    sorted_df = df.sort_values(by=hobbies[1:], ascending=False)
 
+    print('mon export = ', hobbies)
 
+    print("DataFrame trié :")
+    print(sorted_df)
+
+    # Exporter le DataFrame en fichier Excel
+    output_path = 'output_inst.xlsx'
+    print(f"Exportation vers : {output_path}")
+    sorted_df.to_excel(output_path, index=False, engine='openpyxl')
+
+    print("Fichier exporté avec succès.")
 
 
 # Création de l'analyseur
@@ -307,16 +318,16 @@ if args.add_keywords:
 if args.scoring:
     let_scoring()
 
-#if args.export_scoring is None:
-    #print("Aucun hobby spécifié pour l'exportation.")
-    #extract_user_scoring([])
-#elif len(args.export_scoring) == 0:
-    #print("Option --export_scoring utilisée sans hobbies spécifiques.")
-    #extract_user_scoring([])
-#else:
-    #hobbies = args.export_scoring[0:]
-    #print("Exportation du scoring pour les hobbies :", args.export_scoring)
-    #extract_user_scoring(hobbies)
+if args.export_scoring is None:
+    print("Aucun hobby spécifié pour l'exportation.")
+    extract_user_scoring([])
+elif len(args.export_scoring) == 0:
+    print("Option --export_scoring utilisée sans hobbies spécifiques.")
+    extract_user_scoring([])
+else:
+    hobbies = args.export_scoring[0:]
+    print("Exportation du scoring pour les hobbies :", hobbies)
+    extract_user_scoring(hobbies)
 
 
 #pip install openpyxl
