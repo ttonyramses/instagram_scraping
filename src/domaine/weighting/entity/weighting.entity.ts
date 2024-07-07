@@ -12,6 +12,7 @@ import { Hobby } from '../../hobby/entity/hobby.entity';
 
 
 @Entity({ name: 'weighting' })
+@Unique(['user', 'hobby'])
 export class weighting {
 
   @PrimaryGeneratedColumn()

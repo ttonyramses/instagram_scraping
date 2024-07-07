@@ -120,11 +120,15 @@ export class ScrapingService implements IScrapingService {
 
       // Attendre la page de login
 
+      try {
       // Saisir les identifiants de connexion
       await page.fill('input[name="username"]', user.login);
       await page.fill('input[name="password"]', user.password);
       await page.click('button[type="submit"]');
       //await this.sleep(30_000);
+    } catch (error) {
+      console.log('Erreur submit bouton');
+    }
 
       // Tentative de cliquer sur le bouton ignorer
       try {
@@ -166,12 +170,12 @@ export class ScrapingService implements IScrapingService {
       const stringCookies = JSON.stringify(cookies, null, 2);
       fs.writeFileSync(
         (process.env.COOKIES_JSON_DIR || '../../../.cookies') +
-          '/newCookies/' +
+          '/' +
           user.login +
           '.json',
         stringCookies,
       );
-      await this.sleep(2_000);
+    //  await this.sleep(1_000);
     }
   }
 

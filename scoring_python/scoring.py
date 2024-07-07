@@ -1,12 +1,11 @@
-import sqlite3
 import pandas as pd
+import argparse
 import re
 import unicodedata
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.exc import SQLAlchemyError
 
-import argparse
+import pandas as pd
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 # Paramètres de connexion à votre base de données PostgreSQL
 username = 'postgres'
@@ -259,7 +258,7 @@ def get_users_with_high_scores(df, hobbies):
 def extract_user_scoring(hobbies):
     engine = create_engine(database_url)
     hobbies = [remove_accents_and_capitalize(hobby) for hobby in hobbies]
-    hobbies.append("CHRETIEN")
+    hobbies.append("CHRISTIAN")
     query = """
     SELECT
         w."userId",
@@ -279,7 +278,7 @@ def extract_user_scoring(hobbies):
     pivot_df = get_users_with_high_scores(pivot_df, hobbies)
     hobbies.insert(0, 'userId')
     df = pivot_df[hobbies]
-    sorted_df = df.sort_values(by='CHRETIEN', ascending=False)
+    sorted_df = df.sort_values(by='CHRISTIAN', ascending=False)
     sorted_df.to_excel('output_inst.xlsx', index=False, engine='openpyxl')
 
 
@@ -325,6 +324,6 @@ if args.scoring:
 #pip install sqlalchemy
 #pip install numpy
 #pip install pandas
-#python .\scoring.py --add_keywords chretien "disciple" "jésus"
+#python .\scoring.py --add_keywords CHRISTIAN "disciple" "jésus"
     
     
