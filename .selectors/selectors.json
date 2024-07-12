@@ -1,7 +1,5 @@
 {
   "pageInfo": {
-    "buttonAuthoriseCookies": "div[role='dialog'] button._a9--._ap36._a9_0",
-    "buttonFollower": "main.xvbhtw8 header section:nth-child(3) ul li:nth-child(2) div > a",
-    "buttonFollowing": "main.xvbhtw8 header section:nth-child(3) ul li:nth-child(3) div > a"
+    "buttonAuthoriseCookies": "div[role='dialog'] button._a9--._ap36._a9_0"
   }
 }

@@ -13,6 +13,9 @@ export class UserDto {
   externalUrl?: string;
   profileUrl?: string;
   hasInfo?: boolean;
-  hasProcess?: boolean;
+  hasFollowerProcess?: boolean;
+  hasFollowingProcess?: boolean;
   enable?: boolean;
+  maxIdFollower?: string;
+  maxIdFollowing?: string;
 }

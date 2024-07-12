@@ -41,10 +41,21 @@ export class User {
   hasInfo: boolean;
 
   @Column('boolean', { default: false })
-  hasProcess: boolean;
+  hasFollowerProcess: boolean;
+
+  @Column('boolean', { default: false })
+  hasFollowingProcess: boolean;
+
 
   @Column('boolean', { default: true })
   enable: boolean;
+
+  @Column('varchar', { nullable: true })
+  maxIdFollower: string | null;
+
+  @Column('varchar', { nullable: true })
+  maxIdFollowing: string | null;
+
 
   @CreateDateColumn()
   createdAt: Date;
