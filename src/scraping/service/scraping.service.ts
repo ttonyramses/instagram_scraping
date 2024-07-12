@@ -89,7 +89,7 @@ export class ScrapingService implements IScrapingService {
       headless: (process.env.HEADLESS || 'true') === 'true',
     });
     const context = await browser.newContext();
-    context.setDefaultTimeout(parseInt('3000')); //process.env.SELECTOR_TIMEOUT ||
+    context.setDefaultTimeout(parseInt('5000')); //process.env.SELECTOR_TIMEOUT ||
     context.setDefaultNavigationTimeout(
       parseInt(process.env.NAVIGATION_TIMEOUT || '60000'),
     );
@@ -611,7 +611,7 @@ export class ScrapingService implements IScrapingService {
                   : user.maxIdFollowing),
               nbFollow,
             );
-            if(this.nbItemProcess > nbFollow){
+            if (this.nbItemProcess > nbFollow) {
               this.logger.info(
                 `Nombre maximal de utilisateur a traiter atteint soit (${this.nbItemProcess}), fin du programme`,
               );
@@ -648,7 +648,7 @@ export class ScrapingService implements IScrapingService {
                     : user.maxIdFollowing),
                 nbFollow,
               );
-              if(this.nbItemProcess > nbFollow){
+              if (this.nbItemProcess > nbFollow) {
                 this.logger.info(
                   `Nombre maximal de utilisateur a traiter atteint soit (${this.nbItemProcess}), fin du programme`,
                 );
@@ -683,7 +683,7 @@ export class ScrapingService implements IScrapingService {
                     : user.maxIdFollowing),
                 nbFollow,
               );
-              if(this.nbItemProcess > nbFollow){
+              if (this.nbItemProcess > nbFollow) {
                 this.logger.info(
                   `Nombre maximal de utilisateur a traiter atteint soit (${this.nbItemProcess}), fin du programme`,
                 );
@@ -1018,11 +1018,15 @@ export class ScrapingService implements IScrapingService {
         // console.log('userNames =',usersNames)
         if (follow == Follow.FOLLOWER) {
           await this.addFollowers(pseudo, users);
-          userDto.maxIdFollower = responseData.next_max_id;
+          if (!this.stopCallApi) {
+            userDto.maxIdFollower = responseData.next_max_id;
+          }
           userDto.hasFollowerProcess = this.stopCallApi;
         } else {
           await this.addFollowings(pseudo, users);
-          userDto.maxIdFollowing = responseData.next_max_id;
+          if (!this.stopCallApi) {
+            userDto.maxIdFollowing = responseData.next_max_id;
+          }
           userDto.hasFollowingProcess = this.stopCallApi;
         }
         await this.userService.save(userDto);
