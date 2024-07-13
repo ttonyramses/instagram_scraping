@@ -6,7 +6,7 @@ export PATH=/home/tony/.nvm/versions/node/v20.11.1/bin:$PATH
 DIR="/home/tony/Dropbox/Notes/data/instagram_scraping/cookies"
 
 # Commande à exécuter avec chaque fichier JSON comme paramètre
-COMMAND="/home/tony/dev/psu-dev/instagram_scraping/start.sh  scrap-followers --hobbies CHRISTIAN --cookies "
+COMMAND="/home/tony/dev/psu-dev/instagram_scraping/start.sh  scrap-followers --cookies "
 
 # Générer le nom du fichier de log avec la date et l'heure actuelles
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
