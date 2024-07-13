@@ -125,6 +125,7 @@ export class ScrapingService implements IScrapingService {
         await page.fill('input[name="username"]', user.login);
         await page.fill('input[name="password"]', user.password);
         await page.click('button[type="submit"]');
+        await page.waitForLoadState('networkidle');
         //await this.sleep(30_000);
       } catch (error) {
         console.log('Erreur submit bouton');
