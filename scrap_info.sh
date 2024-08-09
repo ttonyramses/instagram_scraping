@@ -10,7 +10,7 @@ COMMAND="/home/tony/dev/psu-dev/instagram_scraping/start.sh  scrap-info --cookie
 
 # Générer le nom du fichier de log avec la date et l'heure actuelles
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOG_FILE="/home/tony/Dropbox/Notes/data/instagram_scraping/logs/daily/scrap_info_${TIMESTAMP}.log"
+LOG_FILE="/home/tony/dev/psu-dev/instagram_scraping/logs/daily/scrap_info_${TIMESTAMP}.log"
 
 # Rediriger toutes les sorties standard et d'erreur vers le fichier de log
 exec >> "$LOG_FILE" 2>&1

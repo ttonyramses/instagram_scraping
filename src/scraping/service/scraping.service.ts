@@ -116,19 +116,20 @@ export class ScrapingService implements IScrapingService {
         console.log('Pas de bouton autoriser cookies');
       }
 
-      await page.waitForSelector('input[name="username"]');
-
+      
       // Attendre la page de login
-
+      
       try {
         // Saisir les identifiants de connexion
+        await this.sleep(2_000);
+        await page.waitForSelector('input[name="username"]');
         await page.fill('input[name="username"]', user.login);
         await page.fill('input[name="password"]', user.password);
         await page.click('button[type="submit"]');
         await page.waitForLoadState('networkidle');
-        //await this.sleep(30_000);
+        await this.sleep(5_000);
       } catch (error) {
-        console.log('Erreur submit bouton');
+        console.log('Erreur submit bouton', error);
       }
 
       // Tentative de cliquer sur le bouton ignorer
@@ -153,7 +154,7 @@ export class ScrapingService implements IScrapingService {
           'div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xefnots.x1wt1izd.xv7j57z.xixehch > div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xx6bls6 > div > div:nth-child(1) > div > div > div',
         );
       } catch (error) {
-        console.log('Pas de bouton ignorer');
+        console.log('Pas de bouton Accepter');
       }
 
       try {
@@ -161,7 +162,7 @@ export class ScrapingService implements IScrapingService {
           'div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xefnots.x1wt1izd.xv7j57z.xixehch > div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xx6bls6 > div > div:nth-child(1) > div > div',
         );
       } catch (error) {
-        console.log('Pas de bouton Accepter');
+        console.log('Pas de bouton suite Acceptation');
       }
 
       // Récupérer les cookies
