@@ -4,6 +4,7 @@ import {
   ManyToOne,
   PrimaryColumn,
   JoinColumn,
+  Column,
 } from 'typeorm';
 import { Hobby } from '../../hobby/entity/hobby.entity';
 
@@ -17,5 +18,8 @@ export class HobbyKeywords {
   hobby: Hobby;
 
   @PrimaryColumn('varchar')
-  keyword: string  
+  keyword: string 
+  
+  @Column('int', { default: 0 })
+  score: number
 }

@@ -179,6 +179,7 @@ def send_to_bdd(session, engine, df):
             'weight': 'score'
         }
 
+        df = df[df['weight'] > 0]
         # Réorganiser les colonnes
         df = df[new_order]
 
