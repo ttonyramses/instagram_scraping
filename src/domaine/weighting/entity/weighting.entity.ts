@@ -5,31 +5,31 @@ import {
   ManyToOne,
   Unique,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from '../../user/entity/user.entity';
 import { Hobby } from '../../hobby/entity/hobby.entity';
 
 
 @Entity({ name: 'weighting' })
-@Unique(['user', 'hobby'])
+//@Unique(['user', 'hobby'])
 export class weighting {
 
-  @PrimaryGeneratedColumn()
-  id : number;
-  
+  @PrimaryColumn({ type: 'int', name: 'hobbyId' })
   @ManyToOne(() => Hobby)
   hobby: Hobby;
 
-  
+  @PrimaryColumn({ type: 'varchar', name: 'userId' })
   @ManyToOne(() => User)
   user: User;
 
-  @Column('int', { nullable: true })
+  @Column('bigint', { nullable: true })
   score: number | null;
 
   @Column('int', { nullable: true })
   occurrences: number | null;
+
+  @Column('int', { nullable: true })
+  following_occurrences: number | null;
 
   @Column('int', { nullable: true })
   hobby_in_bio: number | null;
