@@ -1,7 +1,7 @@
 import numpy as np
 from sqlalchemy import text
 
-from utils import log_execution_time, log_info_df
+from utils import log_execution_time, log_info_df, log_time
 import pandas as pd
 
 
@@ -73,22 +73,22 @@ class WeightingUpdater:
 
     @log_execution_time
     def calculate_final_score(self):
-        # Calculer le score final avec une opération vectorisée
-        self.weighting_df['score'] = (
-                self.weighting_df['occurrences'].fillna(0) * 5 +
-                self.weighting_df['hobby_in_bio'].fillna(0) +
-                self.weighting_df['following_occurrences']
-        )
-        log_info_df(self.weighting_df, 'self.weighting_df')
-
-    @log_execution_time
-    def save_to_database(self, engine):
         #convertir les types pour se rassurer qu'il sont dans le bon format
-        self.weighting_df['score'] = self.weighting_df['score'].fillna(0).astype('int64')  # ou 'int64' pour BIGINT
         self.weighting_df['occurrences'] = self.weighting_df['occurrences'].replace([np.inf, -np.inf], np.nan).fillna(0).astype('int32')  # ou 'int64' pour BIGINT
         self.weighting_df['following_occurrences'] = self.weighting_df['following_occurrences'].replace([np.inf, -np.inf], np.nan).fillna(0).astype('int32')  # ou 'int64' pour BIGINT
         self.weighting_df['hobby_in_bio'] = self.weighting_df['hobby_in_bio'].replace([np.inf, -np.inf], np.nan).fillna(0).astype('int32')  # ou 'int64' pour BIGINT
 
+        # Calculer le score final avec une opération vectorisée
+        self.weighting_df['score'] = (
+                self.weighting_df['occurrences'] * 5 +
+                self.weighting_df['hobby_in_bio'] +
+                self.weighting_df['following_occurrences']
+        )
+        self.weighting_df['score'] = self.weighting_df['score'].fillna(0).astype('int64')  # ou 'int64' pour BIGINT
+        log_info_df(self.weighting_df, 'self.weighting_df')
+
+    @log_execution_time
+    def save_to_database(self, engine):
         # Transformer le DataFrame en une liste de tuples
         data_tuples = list(self.weighting_df.itertuples(index=False, name='weighting'))
 
@@ -103,11 +103,11 @@ class WeightingUpdater:
 
         # Exécution en mode batch
         with engine.connect() as conn:
-            print("Starting the batch update...")
+            log_time("Starting the batch update...")
             with conn.begin():
                 result = conn.execute(
                     text(insert_query),
                     [{"userId": row.userId, "hobbyId": row.hobbyId, "score":row.score, "occurrences": row.occurrences, "following_occurrences":row.following_occurrences, "hobby_in_bio": row.hobby_in_bio } for row in data_tuples]
                 )
-                print("Batch update executed:", result.rowcount, "rows affected")
+                log_time(f"Batch update executed: {result.rowcount}, rows affected")
 
