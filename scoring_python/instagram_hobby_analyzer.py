@@ -1,10 +1,12 @@
 import pandas as pd
-import numpy as np
+
+from sqlalchemy import Table
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from database_connector import DatabaseConnector
 from hobby_score_calculator import HobbyScoreCalculator
-from weighting_updater import WeightingUpdater
 from utils import log_time, log_info_df, log_execution_time
+from weighting_updater import WeightingUpdater
 
 
 class InstagramHobbyAnalyzer:
@@ -12,7 +14,7 @@ class InstagramHobbyAnalyzer:
         self.db_connector = DatabaseConnector(database_url)
 
     @log_execution_time
-    def run(self):
+    def update_scoring(self):
         log_time("Starting Instagram Hobby Analyzer")
 
         # Charger les tables
@@ -21,8 +23,11 @@ class InstagramHobbyAnalyzer:
         user_followers_df = self.db_connector.load_table('user_followers')
         user_followings_df = self.db_connector.load_table('user_followings')
         user_hobby_df = self.db_connector.load_table('user_hobby')
+        hobby_df = self.db_connector.load_table('hobby')
         hobby_keywords_df = self.db_connector.load_table('hobby_keywords')
         weighting_df = self.db_connector.load_table('weighting')
+
+        #users_df = users_df[users_df['id'].str.startswith('jeunesse_et')]
         log_info_df(users_df, 'users_df')
         log_info_df(user_followers_df, 'user_followers_df')
         log_info_df(user_followings_df, 'user_followings_df')
@@ -32,7 +37,7 @@ class InstagramHobbyAnalyzer:
 
         # Calculer les scores
         log_time("Calculating scores")
-        calculator = HobbyScoreCalculator(users_df, user_followers_df, user_followings_df, user_hobby_df,
+        calculator = HobbyScoreCalculator(users_df, user_followers_df, user_followings_df, user_hobby_df,hobby_df,
                                           hobby_keywords_df)
 
         occurrences_df = calculator.calculate_occurrences()
@@ -52,7 +57,7 @@ class InstagramHobbyAnalyzer:
         log_time("Instagram Hobby Analyzer finished")
 
     @log_execution_time
-    def get_top_users_by_hobbies(self, hobbies, top_n=2000):
+    def export_top_users_by_hobbies(self, hobbies, top_n=2000):
         log_time("Starting extraction user")
         # Charger la table weighting et hobby
         weighting_df = self.db_connector.load_table('weighting')
@@ -123,3 +128,44 @@ class InstagramHobbyAnalyzer:
         output_path = 'output_inst.xlsx'
         top_users_details.to_excel(output_path, index=False, engine='openpyxl')
         log_time("Ending extraction")
+
+    @log_execution_time
+    def add_or_update_keywords(self, hobby_name, keywords):
+        log_time("Starting adding keywords")
+
+        try:
+            # Connexion à la base de données
+            with self.db_connector.engine.connect() as connection:
+                # Charger la table hobby et hobby_keywords via SQLAlchemy
+                hobby_table = Table('hobby', self.db_connector.metadata, autoload_with=self.db_connector.engine)
+                hobby_keywords_table = Table('hobby_keywords', self.db_connector.metadata, autoload_with=self.db_connector.engine)
+
+                # Récupérer l'ID du hobby
+                select_query = hobby_table.select().where(hobby_table.c.name.ilike(hobby_name))
+                result_hobby_id = connection.execute(select_query).fetchone()
+
+                if result_hobby_id is None:
+                    log_time(f"Hobby '{hobby_name}' n'existe pas dans la base de données.")
+                    return
+
+                hobby_id = result_hobby_id.id
+
+                # Préparer les valeurs pour l'insertion en batch
+                values = [{'hobby_id': hobby_id, 'keyword': keyword, 'score': score} for keyword, score in keywords.items()]
+
+                # Requête pour insérer ou mettre à jour en mode batch
+                insert_stmt = pg_insert(hobby_keywords_table).values(values)
+
+                # Définir l'action en cas de conflit (ON CONFLICT)
+                upsert_stmt = insert_stmt.on_conflict_do_update(
+                    index_elements=['hobby_id', 'keyword'],
+                    set_=dict(score=insert_stmt.excluded.score)
+                )
+
+                # Exécuter la requête
+                result = connection.execute(upsert_stmt)
+                connection.commit()
+                log_time(f"keyword for hobby '{hobby_name}' update executed: {result.rowcount}, rows affected")
+
+        except Exception as e:
+            log_time(f"Erreur lors de l'insertion/mise à jour des mots-clés: {e}")

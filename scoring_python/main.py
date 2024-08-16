@@ -17,25 +17,30 @@ analyzer = InstagramHobbyAnalyzer(DATABASE_URL)
 
 # Création de l'analyseur
 parser = argparse.ArgumentParser(description='Exécuter des fonctions spécifiques dans le script.')
-parser.add_argument('-esc', '--export_scoring', nargs='+',
-                    help='Exporter le scoring des users en fonctions des hobbies choisis')
-parser.add_argument('-ak', '--add_keywords', nargs='+', help='Ajouter des mots clés à un hobby')
-parser.add_argument('-sc', '--scoring', help='Exécuter la fonction qui défini le poid user/hobby', action='store_true')
-parser.add_argument('-l', '--limit', type=int, default=2000, help="Limite le nombre de résultats exportés")
+# Ajouter une sous-commande 'add-keyword'
+subparsers = parser.add_subparsers(dest='command', help='Sous-commandes')
+
+# Créer le parser pour la commande 'add-keyword'
+parser_add_keyword = subparsers.add_parser('add-keyword', help="Ajouter des keywords avec un hobby")
+parser_export_user = subparsers.add_parser('export_scoring', help="Exporter le scoring des users en fonctions des hobbies choisis")
+parser_scoring = subparsers.add_parser('scoring', help="Calcul du poid ou score de chaque user/hobby")
+
+parser_add_keyword.add_argument('--keyword', required=True, help="Dictionnaire de keywords avec leur valeur", type=str)
+parser_add_keyword.add_argument('--hobby', required=True, help="Hobby associé", type=str)
+parser_export_user.add_argument('--hobbies', required=True, help="Liste de hobbies", nargs='+', type=str)
+parser_export_user.add_argument('-l', '--limit', type=int, default=2000, help="Limite le nombre de résultats exportés")
 
 args = parser.parse_args()
 # Traitement en fonction des arguments reçus
-if args.add_keywords:
-    hobby = args.add_keywords[0]
-    keywords = args.add_keywords[1:]
-    #add_keywords_to_hobby(hobby, keywords)
+if args.command == 'add-keyword':
+    keywords = eval(args.keyword)
+    analyzer.add_or_update_keywords(args.hobby, keywords)
 
-if args.scoring:
-    analyzer.run()
+elif args.command == 'scoring':
+    analyzer.update_scoring()
 
-if args.export_scoring:
-    hobbies = args.export_scoring
-    analyzer.get_top_users_by_hobbies(hobbies, top_n=args.limit)
+elif args.command == 'export_scoring':
+    analyzer.export_top_users_by_hobbies(args.hobbies, top_n=args.limit)
 
 
 

@@ -15,13 +15,14 @@ class WeightingUpdater:
 
         # Utiliser une fusion pour mettre à jour la colonne occurrences
         self.weighting_df = occurrences_df[['user_id', 'hobby_id', 'occurrences']].merge(self.weighting_df,
-            left_on=['user_id', 'hobby_id'],
-            right_on=['userId', 'hobbyId'],
-            how = 'outer')
+                                                                                         left_on=['user_id',
+                                                                                                  'hobby_id'],
+                                                                                         right_on=['userId', 'hobbyId'],
+                                                                                         how='outer')
 
         # Mettre à jour uniquement les valeurs existantes, sans écraser les valeurs existantes qui n'ont pas de correspondance
         self.weighting_df['occurrences'] = self.weighting_df['occurrences_x'].fillna(0)
-        self.weighting_df['userId'] = self.weighting_df['user_id'].fillna(self.weighting_df['userId'] )
+        self.weighting_df['userId'] = self.weighting_df['user_id'].fillna(self.weighting_df['userId'])
         self.weighting_df['hobbyId'] = self.weighting_df['hobby_id'].fillna(self.weighting_df['hobbyId'])
         columns_to_drop = ['occurrences_x', 'occurrences_y', 'user_id', 'hobby_id', 'id']
         existing_columns = [col for col in columns_to_drop if col in self.weighting_df.columns]
@@ -35,14 +36,16 @@ class WeightingUpdater:
 
         # Utiliser une fusion pour mettre à jour la colonne hobby_in_bio
         self.weighting_df = hobby_in_bio_df[['user_id', 'hobby_id', 'hobby_in_bio']].merge(self.weighting_df,
-            left_on=['user_id', 'hobby_id'],
-            right_on=['userId', 'hobbyId'],
-            how = 'outer'
-        )
+                                                                                           left_on=['user_id',
+                                                                                                    'hobby_id'],
+                                                                                           right_on=['userId',
+                                                                                                     'hobbyId'],
+                                                                                           how='outer'
+                                                                                           )
 
         # Mettre à jour uniquement les valeurs existantes
         self.weighting_df['hobby_in_bio'] = self.weighting_df['hobby_in_bio_x'].fillna(0)
-        self.weighting_df['userId'] = self.weighting_df['user_id'].fillna(self.weighting_df['userId'] )
+        self.weighting_df['userId'] = self.weighting_df['user_id'].fillna(self.weighting_df['userId'])
         self.weighting_df['hobbyId'] = self.weighting_df['hobby_id'].fillna(self.weighting_df['hobbyId'])
 
         # Supprimer les colonnes intermédiaires
@@ -55,15 +58,16 @@ class WeightingUpdater:
         log_info_df(following_occurrences_df, 'following_occurrences_df')
 
         # Utiliser une fusion pour mettre à jour la colonne following_occurrences
-        self.weighting_df = following_occurrences_df[['user_id', 'hobby_id', 'following_occurrences']].merge(self.weighting_df,
+        self.weighting_df = following_occurrences_df[['user_id', 'hobby_id', 'following_occurrences']].merge(
+            self.weighting_df,
             left_on=['user_id', 'hobby_id'],
             right_on=['userId', 'hobbyId'],
-            how = 'outer'
-        )
+            how='outer'
+            )
 
         # Mettre à jour uniquement les valeurs existantes
         self.weighting_df['following_occurrences'] = self.weighting_df['following_occurrences_x'].fillna(0)
-        self.weighting_df['userId'] = self.weighting_df['user_id'].fillna(self.weighting_df['userId'] )
+        self.weighting_df['userId'] = self.weighting_df['user_id'].fillna(self.weighting_df['userId'])
         self.weighting_df['hobbyId'] = self.weighting_df['hobby_id'].fillna(self.weighting_df['hobbyId'])
 
         # Supprimer les colonnes intermédiaires
@@ -73,16 +77,19 @@ class WeightingUpdater:
 
     @log_execution_time
     def calculate_final_score(self):
-        #convertir les types pour se rassurer qu'il sont dans le bon format
-        self.weighting_df['occurrences'] = self.weighting_df['occurrences'].replace([np.inf, -np.inf], np.nan).fillna(0).astype('int32')  # ou 'int64' pour BIGINT
-        self.weighting_df['following_occurrences'] = self.weighting_df['following_occurrences'].replace([np.inf, -np.inf], np.nan).fillna(0).astype('int32')  # ou 'int64' pour BIGINT
-        self.weighting_df['hobby_in_bio'] = self.weighting_df['hobby_in_bio'].replace([np.inf, -np.inf], np.nan).fillna(0).astype('int32')  # ou 'int64' pour BIGINT
+        # convertir les types pour se rassurer qu'il sont dans le bon format
+        self.weighting_df['occurrences'] = self.weighting_df['occurrences'].replace([np.inf, -np.inf], np.nan).fillna(
+            0).astype('int32')  # ou 'int64' pour BIGINT
+        self.weighting_df['following_occurrences'] = self.weighting_df['following_occurrences'].replace(
+            [np.inf, -np.inf], np.nan).fillna(0).astype('int32')  # ou 'int64' pour BIGINT
+        self.weighting_df['hobby_in_bio'] = self.weighting_df['hobby_in_bio'].replace([np.inf, -np.inf], np.nan).fillna(
+            0).astype('int32')  # ou 'int64' pour BIGINT
 
         # Calculer le score final avec une opération vectorisée
         self.weighting_df['score'] = (
-                self.weighting_df['occurrences'] * 5 +
-                self.weighting_df['hobby_in_bio'] +
-                self.weighting_df['following_occurrences']
+                self.weighting_df['occurrences'] * 5
+                + self.weighting_df['hobby_in_bio']
+                # + self.weighting_df['following_occurrences']
         )
         self.weighting_df['score'] = self.weighting_df['score'].fillna(0).astype('int64')  # ou 'int64' pour BIGINT
         log_info_df(self.weighting_df, 'self.weighting_df')
@@ -107,7 +114,8 @@ class WeightingUpdater:
             with conn.begin():
                 result = conn.execute(
                     text(insert_query),
-                    [{"userId": row.userId, "hobbyId": row.hobbyId, "score":row.score, "occurrences": row.occurrences, "following_occurrences":row.following_occurrences, "hobby_in_bio": row.hobby_in_bio } for row in data_tuples]
+                    [{"userId": row.userId, "hobbyId": row.hobbyId, "score": row.score, "occurrences": row.occurrences,
+                      "following_occurrences": row.following_occurrences, "hobby_in_bio": row.hobby_in_bio} for row in
+                     data_tuples]
                 )
                 log_time(f"Batch update executed: {result.rowcount}, rows affected")
-
