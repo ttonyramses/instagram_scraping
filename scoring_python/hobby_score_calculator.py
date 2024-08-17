@@ -68,9 +68,8 @@ class HobbyScoreCalculator:
 
     @log_execution_time
     def calculate_following_occurrences(self, occurrences_df):
-        following_occurrences_df = pd.merge(self.user_followings_df, occurrences_df, left_on='following_id',
-                                            right_on='user_id')
-        following_occurrences_df = following_occurrences_df.rename(columns={'user_id_y': 'user_id'})
+        following_occurrences_df = pd.merge(self.user_followings_df, occurrences_df, on='user_id', how='inner')
+        #following_occurrences_df = following_occurrences_df.rename(columns={'user_id_y': 'user_id'})
         following_count_df = following_occurrences_df[following_occurrences_df['occurrences'] > 0].groupby(
             ['user_id', 'hobby_id']).size().reset_index(name='following_occurrences')
         log_info_df(following_count_df, 'following_count_df')
