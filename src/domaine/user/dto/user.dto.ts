@@ -4,6 +4,7 @@ export class UserDto {
   id: string;
   name?: string;
   biography?: string;
+  json?: object;
   nbFollowers?: number;
   nbFollowings?: number;
   nbPublications?: number;

@@ -349,7 +349,10 @@ export class ScrapingService implements IScrapingService {
       this.logger.debug(`pseudo ${pseudo} : status http ${response.status} OK`);
     }
 
-    const userResponse: User2ProfileResponse = await response.json();
+    const userJson = await response.json(); // Récupère la réponse brute sous forme de json
+    //console.log(JSON.stringify(userJson))
+    const userResponse: User2ProfileResponse = userJson; // Convertit en objet pour extraire les infos
+
 
     if (userResponse && userResponse.data && userResponse.data.user) {
       user.name = userResponse.data.user.full_name;
@@ -365,6 +368,7 @@ export class ScrapingService implements IScrapingService {
       user.profileUrl = userResponse.data.user.profile_pic_url_hd;
       user.hasInfo = true;
       user.enable = true;
+      user.json = userJson;
     } else {
       this.logger.debug(`${pseudo} : ce pseudo est certainement desactivé`);
       user.nbFollowers = 0;

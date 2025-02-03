@@ -13,6 +13,10 @@ export class User {
   @Column('text', { nullable: true })
   biography: string | null;
 
+  @Column('jsonb', { nullable: true })
+  json: object | null;
+
+
   @Column('int', { nullable: true })
   nbFollowers: number | null;
 
