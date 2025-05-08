@@ -4,4 +4,12 @@ export const TYPES = {
     IUserService: Symbol.for('IUserService'),
     IHobbyService: Symbol.for('IHobbyService'),
     IScrapingService: Symbol.for('IScrapingService'),
+    IBrowserService: Symbol.for('IBrowserService'),
+    IAuthService: Symbol.for('IAuthService'),
+    IUserInfoService: Symbol.for('IUserInfoService'),
+    IFollowerService: Symbol.for('IFollowerService'),
+    IFollowingService: Symbol.for('IFollowingService'),
+    IHobbyScrapingService: Symbol.for('IHobbyScrapingService'),
+    SleepUtil: Symbol.for('SleepUtil'),
+    RandomUtil: Symbol.for('RandomUtil'),
 };

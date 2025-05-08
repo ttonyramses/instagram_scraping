@@ -74,13 +74,13 @@ interface User {
     };
   }
 
-  export interface  UserAuth {
-    login: string;
-    password: string;
-  }
-  
+// type/index.ts
+export enum Follow {
+  FOLLOWER = 'follower',
+  FOLLOWING = 'following',
+}
 
-  export enum Follow {
-    FOLLOWER,
-    FOLLOWING,
-  }
+export interface UserAuth {
+  login: string;
+  password: string;
+}
