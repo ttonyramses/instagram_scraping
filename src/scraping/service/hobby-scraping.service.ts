@@ -1,15 +1,15 @@
 import { inject, injectable } from 'inversify';
-import { IFollowerService } from '../interface/ifollower.service';
+import { IHobbyScrapingService } from '../interface/ihobby-scraping.service';
 import { TYPES } from '../../core/type.core';
-import { IUserService } from '../../domaine/user/interface/iuser.service';
 import { Logger } from 'winston';
 import { IBrowserService } from '../interface/ibrowser.service';
+import { IUserService } from '../../domaine/user/interface/iuser.service';
 import { UserDto } from '../../domaine/user/dto/user.dto';
 import { chromium } from 'playwright';
 import { Pool, Worker, spawn } from 'threads';
 
 @injectable()
-export class FollowerService implements IFollowerService {
+export class HobbyScrapingService implements IHobbyScrapingService {
   private nbItemProcess: number;
 
   constructor(
@@ -18,10 +18,11 @@ export class FollowerService implements IFollowerService {
     @inject(TYPES.Logger) private readonly logger: Logger,
   ) {}
 
-  async getAllFollowers(
+  async applyHobbies(
     force: boolean,
     cookiesFileName: string,
     selectorsFileName: string,
+    hobbies: string[],
     pseudoList?: string[],
   ): Promise<void> {
     this.nbItemProcess = 0;
@@ -38,25 +39,25 @@ export class FollowerService implements IFollowerService {
           this.logger.info('user ' + pseudo + ' not found ');
           continue;
         }
-        if (user.hasFollowers && !force) {
+        if (user.hasHobbies && !force) {
           this.logger.info(
-            'Les followers de ' +
+            'Les hobbies de ' +
               pseudo +
               ' sont déjà présents dans la base de données',
           );
           continue;
         } else {
-          await this.getAndSaveFollowers(user);
+          await this.getAndSaveHobbies(user, hobbies);
         }
       }
     } else {
       const users = force
         ? await this.userService.findAll()
-        : await this.userService.findAllWithNoFollowers();
+        : await this.userService.findAllWithNoHobbies();
       let i = 0;
 
       const blockSize = parseInt(
-        process.env.BLOCK_SIZE_THREAD_GET_FOLLOWERS || '5000',
+        process.env.BLOCK_SIZE_THREAD_GET_HOBBIES || '5000',
       );
       let indexBloc = 0;
       this.logger.info('nombre compte à traiter :  ' + users.length);
@@ -64,12 +65,12 @@ export class FollowerService implements IFollowerService {
         indexBloc++;
         let block_users = users.slice(i, i + blockSize);
         this.logger.info(
-          'start init Tasks for getAllFollowers block N° ' + indexBloc,
+          'start init Tasks for applyHobbies block N° ' + indexBloc,
         );
         const pool = Pool(
           () => spawn(new Worker('../multithreading/worker')),
           parseInt(
-            process.env.NB_THREAD_GET_FOLLOWERS || '10',
+            process.env.NB_THREAD_GET_HOBBIES || '10',
           ),
         );
 
@@ -90,7 +91,7 @@ export class FollowerService implements IFollowerService {
                 );
                 return Promise.reject('Processing stopped');
               }
-              await this.getAndSaveFollowers(user);
+              await this.getAndSaveHobbies(user, hobbies);
             } catch (error) {
               this.logger.error(error);
               stopProcessing = true;
@@ -98,7 +99,7 @@ export class FollowerService implements IFollowerService {
           });
         });
         this.logger.info(
-          'end init Tasks for getAllFollowers block N° ' + indexBloc,
+          'end init Tasks for applyHobbies block N° ' + indexBloc,
         );
 
         try {
@@ -121,16 +122,16 @@ export class FollowerService implements IFollowerService {
     );
   }
 
-  async getAndSaveFollowers(user: UserDto): Promise<void> {
-    const followers = await this.getFollowersByApi(user.instagramId, user.id);
+  async getAndSaveHobbies(user: UserDto, hobbies: string[]): Promise<void> {
+    const userHobbies = await this.getHobbiesByApi(user.instagramId, user.id);
 
-    if (followers && followers.length > 0) {
+    if (userHobbies && userHobbies.length > 0) {
       this.logger.debug(
-        `save followers for user ${user.id} = ${followers.length}`,
+        `save hobbies for user ${user.id} = ${userHobbies.length}`,
       );
-      await this.userService.saveFollowers(user.id, followers);
+      await this.userService.saveHobbies(user.id, userHobbies);
     } else {
-      this.logger.debug(`not save followers for user ${user.id}`);
+      this.logger.debug(`not save hobbies for user ${user.id}`);
     }
     this.nbItemProcess++;
     if (
@@ -146,7 +147,7 @@ export class FollowerService implements IFollowerService {
     await this.sleep(this.getRandomNumber(500, 2000));
   }
 
-  async getFollowersByApi(
+  async getHobbiesByApi(
     instagramId: number,
     pseudo: string,
   ): Promise<string[]> {
@@ -177,35 +178,35 @@ export class FollowerService implements IFollowerService {
       this.logger.debug(`pseudo ${pseudo} : status http ${response.status} OK`);
     }
 
-    const followersResponse = await response.json();
-    const followers: string[] = [];
+    const hobbiesResponse = await response.json();
+    const hobbies: string[] = [];
 
     if (
-      followersResponse &&
-      followersResponse.data &&
-      followersResponse.data.user &&
-      followersResponse.data.user.edge_followed_by &&
-      followersResponse.data.user.edge_followed_by.edges
+      hobbiesResponse &&
+      hobbiesResponse.data &&
+      hobbiesResponse.data.user &&
+      hobbiesResponse.data.user.edge_followed_by &&
+      hobbiesResponse.data.user.edge_followed_by.edges
     ) {
-      for (const edge of followersResponse.data.user.edge_followed_by.edges) {
+      for (const edge of hobbiesResponse.data.user.edge_followed_by.edges) {
         if (edge.node && edge.node.username) {
-          followers.push(edge.node.username);
+          hobbies.push(edge.node.username);
         }
       }
     }
 
-    return followers;
+    return hobbies;
   }
 
-  async getFollowersOnPage(pseudo: string): Promise<string[]> {
-    const url = this.browserService.getBaseUrl() + '/' + pseudo + '/followers';
+  async getHobbiesOnPage(pseudo: string): Promise<string[]> {
+    const url = this.browserService.getBaseUrl() + '/' + pseudo;
     const myPage = await this.browserService.getContext().newPage();
-    const followers: string[] = [];
+    const hobbies: string[] = [];
 
     let endProcess = false;
 
     new Promise((resolve, reject) => {
-      let hasGetFollowers = false;
+      let hasGetHobbies = false;
       myPage.on('response', async (response) => {
         const request = response.request();
         const regexGraphQl = /\/api\/graphql|\/graphql\/query/;
@@ -227,7 +228,7 @@ export class FollowerService implements IFollowerService {
         } else if (
           request.resourceType() === 'xhr' &&
           matchGraphQl &&
-          !hasGetFollowers
+          !hasGetHobbies
         ) {
           const postData = request.postData();
           const payload = new URLSearchParams(postData);
@@ -242,7 +243,7 @@ export class FollowerService implements IFollowerService {
                   const body = JSON.parse(textBody);
                   if (body.data.user.edge_followed_by.edges) {
                     endProcess = false;
-                    hasGetFollowers = true;
+                    hasGetHobbies = true;
                     resolve(body);
                   }
                 } else {
@@ -263,7 +264,7 @@ export class FollowerService implements IFollowerService {
           }
         } else if (request.resourceType() === 'xhr' && matchBulkRoute) {
           await this.sleep(2_000);
-          if (!hasGetFollowers) {
+          if (!hasGetHobbies) {
             this.logger.debug(
               `${pseudo} : ce pseudo est certainement desactivé`,
             );
@@ -281,7 +282,7 @@ export class FollowerService implements IFollowerService {
       ) {
         for (const edge of response.data.user.edge_followed_by.edges) {
           if (edge.node && edge.node.username) {
-            followers.push(edge.node.username);
+            hobbies.push(edge.node.username);
           }
         }
       }
@@ -292,7 +293,7 @@ export class FollowerService implements IFollowerService {
       await myPage.goto(url);
     } catch (error) {
       this.logger.error(`erreur go to page ${url} ${error.message}`);
-      return followers;
+      return hobbies;
     }
 
     return new Promise((resolve, reject) => {
@@ -301,14 +302,14 @@ export class FollowerService implements IFollowerService {
           await myPage.close();
           clearInterval(intervalID);
           clearTimeout(timeoutID);
-          resolve(followers);
+          resolve(hobbies);
         }
       }, 500);
 
       const timeoutID = setTimeout(async () => {
         clearInterval(intervalID);
         await myPage.close();
-        resolve(followers);
+        resolve(hobbies);
       }, 10_000);
     });
   }
@@ -329,4 +330,4 @@ export class FollowerService implements IFollowerService {
     }
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
-}
+} 
