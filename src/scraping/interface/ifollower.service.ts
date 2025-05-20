@@ -11,9 +11,4 @@ export interface IFollowerService {
     hobbies?: string[],
     pseudoList?: string[],
   ): Promise<void>;
-  getFollowersOfUser(
-    userDto: UserDto,
-    maxId: string,
-    nbFollow: number,
-  ): Promise<void>;
 }

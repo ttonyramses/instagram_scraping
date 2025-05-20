@@ -39,7 +39,7 @@ export class HobbyScrapingService implements IHobbyScrapingService {
           this.logger.info('user ' + pseudo + ' not found ');
           continue;
         }
-        if (user.hasHobbies && !force) {
+        if (user.hobbies && user.hobbies.length > 0 && !force) {
           this.logger.info(
             'Les hobbies de ' +
               pseudo +
@@ -129,7 +129,7 @@ export class HobbyScrapingService implements IHobbyScrapingService {
       this.logger.debug(
         `save hobbies for user ${user.id} = ${userHobbies.length}`,
       );
-      await this.userService.saveHobbies(user.id, userHobbies);
+      await this.userService.addHobbies(user.id, hobbies);
     } else {
       this.logger.debug(`not save hobbies for user ${user.id}`);
     }

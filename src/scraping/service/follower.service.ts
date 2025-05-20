@@ -22,6 +22,9 @@ export class FollowerService implements IFollowerService {
     force: boolean,
     cookiesFileName: string,
     selectorsFileName: string,
+    maxId?: string,
+    nbFollow?: number,
+    hobbies?: string[],
     pseudoList?: string[],
   ): Promise<void> {
     this.nbItemProcess = 0;
@@ -38,7 +41,7 @@ export class FollowerService implements IFollowerService {
           this.logger.info('user ' + pseudo + ' not found ');
           continue;
         }
-        if (user.hasFollowers && !force) {
+        if (user.followers && user.followers.length > 0 && !force) {
           this.logger.info(
             'Les followers de ' +
               pseudo +
