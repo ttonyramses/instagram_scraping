@@ -1,0 +1,12 @@
+[
+  {
+    "name": "csrftoken",
+    "value": "3KO5ePcIk8yhrPmYni6VHp",
+    "domain": ".instagram.com",
+    "path": "/",
+    "expires": 1783695027.178217,
+    "httpOnly": false,
+    "secure": true,
+    "sameSite": "None"
+  }
+]
