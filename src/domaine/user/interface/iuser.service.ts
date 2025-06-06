@@ -15,7 +15,9 @@ export interface IUserService {
   findAllWithNoFollowings(): Promise<UserDto[]>;
   findAllWithNoHobbies(): Promise<UserDto[]>;
   findOneUser(pseudo: string): Promise<UserDto>;
-  addFollowers(pseudo: string, users: UserDto[]): Promise<void>;
-  addFollowings(pseudo: string, users: UserDto[]): Promise<void>;
-  addHobbies(pseudo: string, ushobbies: HobbyDto[]): Promise<void>;
+  saveFollowers(pseudo: string, followers: string[]): Promise<void>;
+  saveFollowings(pseudo: string, followings: string[]): Promise<void>;
+  addFollowers(id: string, users: UserDto[]): Promise<void>;
+  addFollowings(id: string, users: UserDto[]): Promise<void>;
+  addHobbies(id: string, hobbies: HobbyDto[]): Promise<void>;
 }

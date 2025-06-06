@@ -4,16 +4,19 @@ import { TYPES } from '../../core/type.core';
 import { Browser, BrowserContext, BrowserType, Page } from 'playwright';
 import { Logger } from 'winston';
 import { Lock } from 'async-await-mutex-lock';
+import path from "node:path";
+import fs from "fs";
 
 @injectable()
 export class BrowserService implements IBrowserService {
+
   private page: Page;
   private context: BrowserContext;
   private browser: Browser;
   private baseUrl: string;
   private waitAfterActionLong: number;
   private waitAfterActionShort: number;
-  private headersRequest: { [key: string]: string };
+  private _headersRequest: { [key: string]: string };
   private bodyRequest: URLSearchParams;
   private urlRequest: string;
   private lock = new Lock();
@@ -48,14 +51,15 @@ export class BrowserService implements IBrowserService {
     );
 
     await this.context.clearCookies();
+    const cookiesDir = process.env.COOKIES_JSON_DIR || '../../../.cookies';
+    const cookiesPath = path.resolve(cookiesDir);
+    const cookiesFile =  path.join(cookiesPath,cookiesFileName.toString())
 
-    if (cookiesFileName) {
-      const cookies = await import(
-        (process.env.COOKIES_JSON_DIR || '../../../.cookies') +
-          '/' +
-          cookiesFileName
-      );
-      await this.context.addCookies(cookies);
+
+    if (cookiesFile) {
+      const cookiesFileExists = fs.readFileSync(cookiesFile, 'utf8');
+      const cookiesFileExistsJson = JSON.parse(cookiesFileExists);
+      await this.context.addCookies(cookiesFileExistsJson);
     }
 
     await this.context.grantPermissions(['notifications'], {
@@ -103,8 +107,8 @@ export class BrowserService implements IBrowserService {
             ) {
               if (response.status() === 200) {
                 const allHeaders = await request.allHeaders();
-                this.headersRequest = await request.headers();
-                this.headersRequest['cookie'] = allHeaders['cookie'];
+                this._headersRequest = await request.headers();
+                this._headersRequest['cookie'] = allHeaders['cookie'];
                 this.bodyRequest = payload;
                 this.urlRequest = request.url();
 
@@ -194,6 +198,10 @@ export class BrowserService implements IBrowserService {
     await this.browser.close();
   }
 
+  get headersRequest(): { [p: string]: string } {
+    return this._headersRequest;
+  }
+
   getPage(): Page {
     return this.page;
   }
@@ -207,7 +215,7 @@ export class BrowserService implements IBrowserService {
   }
 
   getHeadersRequest(): { [key: string]: string } {
-    return this.headersRequest;
+    return this._headersRequest;
   }
 
   getBodyRequest(): URLSearchParams {
@@ -219,7 +227,7 @@ export class BrowserService implements IBrowserService {
   }
 
   setHeadersRequest(headers: { [key: string]: string }): void {
-    this.headersRequest = headers;
+    this._headersRequest = headers;
   }
 
   setBodyRequest(body: URLSearchParams): void {

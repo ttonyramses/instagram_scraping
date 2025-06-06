@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { IDatabaseService } from '../interface/idatabase.service';
+import { IdatabaseCoreService } from '../interface/idatabase.core.service';
 import { TYPES } from '../type.core';
 import { Logger } from 'winston';
 import {
@@ -12,7 +12,7 @@ import {
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @injectable()
-export class DatabaseService implements IDatabaseService {
+export class DatabaseCoreService implements IdatabaseCoreService {
   private dataSource: DataSource;
 
   constructor(@inject(TYPES.Logger) private readonly logger: Logger) {

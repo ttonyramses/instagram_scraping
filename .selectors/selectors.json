@@ -1,5 +1,13 @@
 {
   "pageInfo": {
-    "buttonAuthoriseCookies": "div[role='dialog'] button._a9--._ap36._a9_0"
+    "buttonAuthoriseCookies": "div[role='dialog'] button._a9--._ap36._asz1",
+    "alternativeButtonAuthoriseCookies": "button._a9--._ap36._asz1",
+    "usernameInput": "input[name='username']",
+    "passwordInput": "input[name='password']",
+    "submitButton": "button[type='submit']",
+    "ignoreButton": "section > main div.wbloks_1.wbloks_78 > div > div > div:nth-child(2) > div:nth-child(2) > div",
+    "laterButton": "div.x9f619.xvbhtw8.x78zum5.x168nmei.x13lgxp2.x5pf9jr.xo71vjh.x1uhb9sk.x1plvlek.xryxfnj.x1c4vz4f.x2lah0s.x1q0g3np.xqjyukv.x1qjc9v5.x1oa3qoh.x1qughib > div.x1gryazu.xh8yej3.x10o80wk.x14k21rp.x17snn68.x6osk4m.x1porb0y > section > main > div > div > div > div",
+    "acceptButton": "div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xefnots.x1wt1izd.xv7j57z.xixehch > div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xx6bls6 > div > div:nth-child(1) > div > div > div",
+    "acceptContinueButton": "div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xefnots.x1wt1izd.xv7j57z.xixehch > div.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xx6bls6 > div > div:nth-child(1) > div > div"
   }
 }

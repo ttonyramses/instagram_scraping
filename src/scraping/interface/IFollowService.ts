@@ -1,8 +1,10 @@
 import { UserDto } from '../../domaine/user/dto/user.dto';
+import {Follow} from "../type";
 
-// ifollower.service.ts
-export interface IFollowerService {
+// ifollow.service.ts
+export interface IFollowService {
   getAllFollowers(
+    follow: Follow,
     force: boolean,
     cookiesFileName: string,
     selectorsFileName: string,

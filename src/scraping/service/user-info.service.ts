@@ -157,7 +157,6 @@ export class UserInfoService implements IUserInfoService {
     );
     const user = new UserDto();
     user.id = pseudo;
-    console.log("response.headers = ", response.headers);
 
     if (!response.ok) {
       this.logger.error(`pseudo ${pseudo} : erreur http ${response.status}`);

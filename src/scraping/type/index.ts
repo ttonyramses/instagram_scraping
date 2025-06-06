@@ -84,3 +84,17 @@ export interface UserAuth {
   login: string;
   password: string;
 }
+
+export interface SelectorsConfig {
+    pageInfo: {
+        buttonAuthoriseCookies: string;
+        alternativeButtonAuthoriseCookies: string;
+        "usernameInput": string,
+        "passwordInput": string,
+        "submitButton": string,
+        "ignoreButton": string,
+        "laterButton": string,
+        "acceptButton": string,
+        "acceptContinueButton":string
+    };
+}

@@ -5,7 +5,7 @@ import { IDatabaseService } from './database/interface/idatabase.service';
 import { ScrapingService } from './scraping/service/scraping.service';
 import { IScrapingService } from './scraping/interface/iscraping.service';
 import { TYPES } from './core/type.core';
-import container from './core/container.core';
+import {container} from './core/container.core';
 import { Logger } from './logger/service/logger.service';
 import {Follow} from './scraping/type';
 

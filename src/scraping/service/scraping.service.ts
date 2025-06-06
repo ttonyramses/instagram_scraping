@@ -5,10 +5,10 @@ import { Logger } from 'winston';
 import { IBrowserService } from '../interface/ibrowser.service';
 import { IAuthService } from '../interface/iauth.service';
 import { IUserInfoService } from '../interface/iuser-info.service';
-import { IFollowerService } from '../interface/ifollower.service';
-import { IFollowingService } from '../interface/ifollowing.service';
 import { IHobbyScrapingService } from '../interface/ihobby.service';
 import { Follow } from '../type';
+import {IFollowService} from "../interface/IFollowService";
+
 
 @injectable()
 export class ScrapingService implements IScrapingService {
@@ -16,8 +16,7 @@ export class ScrapingService implements IScrapingService {
     @inject(TYPES.IBrowserService) private readonly browserService: IBrowserService,
     @inject(TYPES.IAuthService) private readonly authService: IAuthService,
     @inject(TYPES.IUserInfoService) private readonly userInfoService: IUserInfoService,
-    @inject(TYPES.IFollowerService) private readonly followerService: IFollowerService,
-    @inject(TYPES.IFollowingService) private readonly followingService: IFollowingService,
+    @inject(TYPES.IFollowService) private readonly followService: IFollowService,
     @inject(TYPES.IHobbyScrapingService) private readonly hobbyService: IHobbyScrapingService,
     @inject(TYPES.Logger) private readonly logger: Logger,
   ) {}
@@ -53,18 +52,9 @@ export class ScrapingService implements IScrapingService {
     hobbies?: string[],
     pseudoList?: string[],
   ): Promise<void> {
-    if (follow === Follow.FOLLOWER) {
-      return this.followerService.getAllFollowers(
-        force,
-        cookiesFileName,
-        selectorsFileName,
-        maxId,
-        nbFollow,
-        hobbies,
-        pseudoList,
-      );
-    } else {
-      return this.followingService.getAllFollowings(
+    if ((follow === Follow.FOLLOWER)||(follow === Follow.FOLLOWING)) {
+      return this.followService.getAllFollowers(
+        follow,
         force,
         cookiesFileName,
         selectorsFileName,

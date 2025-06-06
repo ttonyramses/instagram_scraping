@@ -45,6 +45,7 @@ src/
 
 - Node.js (v16 ou supérieur)
 - npm ou yarn
+- docker, docker-compose up -d
 - Un compte Instagram valide
 
 ## Installation
@@ -89,6 +90,15 @@ MAX_USER_UPDATE=50000
 ```
 
 ## Utilisation
+
+### Builder l'application
+```bash
+npm run build
+```
+### Lancer le service de base de données avec docker
+```bash
+docker-compose -f  src/database/docker/postgres.yml up -d
+```
 
 ### Récupérer des cookies d'authentification
 
