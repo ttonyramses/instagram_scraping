@@ -175,7 +175,21 @@ export class TypeOrmUserRepository implements UserRepository {
   }
 
   async findAllWithNoHobbies(): Promise<User[]> {
-    return Promise.resolve([]);
+    let userOrms = new Array<UserOrmEntity>();
+    try {
+      // Trouver tous les utilisateurs qui n'ont aucun hobby
+      userOrms = await this.userOrmRepository
+        .createQueryBuilder('user')
+        .leftJoin('user.hobbies', 'hobby')
+        .where('hobby.id IS NULL')
+        .andWhere('user.enable = :enable', { enable: true })
+        .getMany();
+    } catch (error) {
+      this.logger.error('findAllWithNoHobbies error:', error);
+      return [];
+    }
+    // conversion d'un tableau d'objets UserOrmEntity en tableau d'objets User
+    return userOrms.map((userOrm) => this.userMapper.toDomain(userOrm));
   }
 
   async save(user: User): Promise<User> {

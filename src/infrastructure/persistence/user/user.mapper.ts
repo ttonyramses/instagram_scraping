@@ -48,6 +48,8 @@ export class UserMapper {
     ormEntity.enable = user.enable;
     ormEntity.maxIdFollower = user.maxIdFollower;
     ormEntity.maxIdFollowing = user.maxIdFollowing;
+    ormEntity.createdAt = user.createdAt;
+    ormEntity.updatedAt = user.updatedAt;
 
     return ormEntity;
   }

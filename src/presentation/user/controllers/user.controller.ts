@@ -1,49 +1,56 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { UserDto } from '../dto/user.dto';
 import { UserFacadeService } from '../../../application/user/services/UserFacadeService';
-import { CreateUserCommand } from '../../../application/user/commands';
 import { CreateUserDto } from '../dto/create-user.dto';
-import { CreateUserHandler } from '../../../application/user/handlers/command';
 import { UserDtoMapper } from '../dto/user.dto.mapper';
 
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userFacade: UserFacadeService,
-    private readonly createUserHandler: CreateUserHandler,
     private readonly userDtoMapper: UserDtoMapper,
   ) {}
 
-  /* @Post()
-  async saveUser(@Body() userDto: UserDto) {
-    return await this.userFacade.save(userDto);
-  }*/
-
   // Pour la creation de l'utilisateur'
-  @Post('create')
+  @Post()
   async createUser(
     @Body() createUserDto: CreateUserDto,
   ): Promise<Partial<UserDto>> {
-    const createUserCommand = new CreateUserCommand(
-      this.userDtoMapper.toDomain(createUserDto),
-    );
-
-    const user = await this.createUserHandler.handle(createUserCommand);
-    return this.userDtoMapper.toDto(user);
+    const createUser = this.userDtoMapper.createDtoToDomain(createUserDto);
+    const user = await this.userFacade.createUser(createUser);
+    return this.userDtoMapper.entityToUserDto(user);
   }
 
   @Post('bulk')
   async saveUsers(@Body() createUserDtos: CreateUserDto[]) {
     return await this.userFacade.saveAll(
       createUserDtos.map((createUserDto) =>
-        this.userDtoMapper.toDomain(createUserDto),
+        this.userDtoMapper.createDtoToDomain(createUserDto),
       ),
     );
   }
 
+  @Put() // Ajoutez l'ID dans l'URL
+  async updateUser(
+    @Body() updateUserDto: CreateUserDto,
+  ): Promise<Partial<UserDto>> {
+    // Ajoutez l'ID au DTO
+    const updateUser = this.userDtoMapper.updateDtoToDomain(updateUserDto);
+
+    console.log('Data to update:', updateUser); // Debug
+
+    const user = await this.userFacade.updateUser(updateUser);
+    return this.userDtoMapper.entityToUserDto(user);
+  }
+
   @Get(':id')
   async getUser(@Param('id') id: string) {
-    return await this.userFacade.getOneUserWithRelations(id);
+    const user = await this.userFacade.getOneUserWithRelations(id, [
+      'followers',
+      'followings',
+      'hobbies',
+    ]);
+    return this.userDtoMapper.entityToUserDto(user);
   }
 
   @Get()

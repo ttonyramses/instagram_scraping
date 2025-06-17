@@ -1,48 +1,87 @@
-import { IsOptional, IsString, IsNumber, IsUrl } from 'class-validator';
 import { Expose } from 'class-transformer';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 @Expose()
 export class CreateUserDto {
   @IsString()
+  @IsNotEmpty()
   id: string;
 
-  @IsOptional()
   @IsString()
-  name?: string;
+  @IsNotEmpty()
+  name: string;
 
-  @IsOptional()
   @IsString()
-  biography?: string;
-
   @IsOptional()
-  @IsNumber()
-  instagramId?: number;
+  biography: string;
 
-  @IsOptional()
-  @IsNumber()
-  facebookId?: number;
-
-  @IsOptional()
   @IsString()
-  category?: string;
-
   @IsOptional()
+  instagramId: number;
+
+  @IsString()
+  @IsOptional()
+  facebookId: number;
+
+  @IsString()
+  @IsOptional()
+  category: string;
+
+  @IsString()
   @IsUrl()
-  externalUrl?: string;
-
   @IsOptional()
+  externalUrl: string;
+
+  @IsString()
   @IsUrl()
-  profileUrl?: string;
+  @IsOptional()
+  profileUrl: string;
 
-  hasInfo?: boolean;
-  hasFollowerProcess?: boolean;
-  hasFollowingProcess?: boolean;
-  enable?: boolean;
-  maxIdFollower?: string;
-  maxIdFollowing?: string;
+  @IsBoolean()
+  @IsOptional()
+  hasInfo: boolean;
 
-  json?: object;
-  nbFollowers?: number;
-  nbFollowings?: number;
-  nbPublications?: number;
+  @IsBoolean()
+  @IsOptional()
+  hasFollowerProcess: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  hasFollowingProcess: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  enable: boolean;
+
+  @IsString()
+  @IsOptional()
+  maxIdFollower: string;
+
+  @IsString()
+  @IsOptional()
+  maxIdFollowing: string;
+
+  @IsObject()
+  @IsOptional()
+  json: object;
+
+  @IsNumber()
+  @IsOptional()
+  nbFollowers: number;
+
+  @IsNumber()
+  @IsOptional()
+  nbFollowings: number;
+
+  @IsNumber()
+  @IsOptional()
+  nbPublications: number;
 }

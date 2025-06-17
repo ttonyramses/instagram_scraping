@@ -85,7 +85,7 @@ export class UserFacadeService {
   }
 
   async findAllWithNoFollowings(): Promise<User[]> {
-    return await this.getAllUsersWithNoHobbiesHandler.handle();
+    return await this.getAllUsersWithNoFollowingsHandler.handle();
   }
 
   /* async addFollowers(id: string, followers: User[]): Promise<void> {

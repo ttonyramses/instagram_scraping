@@ -232,4 +232,29 @@ export class User {
 
     return user;
   }
+
+  // Dans votre classe User
+  update(updateData: Partial<User>): User {
+    this.name = updateData.name ?? this.name;
+    this.biography = updateData.biography ?? this.biography;
+    this.json = updateData.json ?? this.json;
+    this.nbFollowers = updateData.nbFollowers ?? this.nbFollowers;
+    this.nbFollowings = updateData.nbFollowings ?? this.nbFollowings;
+    this.nbPublications = updateData.nbPublications ?? this.nbPublications;
+    this.instagramId = updateData.instagramId ?? this.instagramId;
+    this.facebookId = updateData.facebookId ?? this.facebookId;
+    this.category = updateData.category ?? this.category;
+    this.externalUrl = updateData.externalUrl ?? this.externalUrl;
+    this.profileUrl = updateData.profileUrl ?? this.profileUrl;
+    this.hasInfo = updateData.hasInfo ?? this.hasInfo;
+    this.hasFollowerProcess =
+      updateData.hasFollowerProcess ?? this.hasFollowerProcess;
+    this.hasFollowingProcess =
+      updateData.hasFollowingProcess ?? this.hasFollowingProcess;
+    this.enable = updateData.enable ?? this.enable;
+    this.maxIdFollower = updateData.maxIdFollower ?? this.maxIdFollower;
+    this.maxIdFollowing = updateData.maxIdFollowing ?? this.maxIdFollowing;
+    this.updatedAt = new Date();
+    return this;
+  }
 }
