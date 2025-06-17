@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class InitialSchema1640000000001 implements MigrationInterface {
-    name = 'InitialSchema1640000000001'
+  name = 'InitialSchema1640000000001';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // Création de la table user
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Création de la table user
+    await queryRunner.query(`
             CREATE TABLE "user" (
                 "id" varchar PRIMARY KEY,
                 "name" varchar,
@@ -30,16 +30,16 @@ export class InitialSchema1640000000001 implements MigrationInterface {
             )
         `);
 
-        // Création de la table hobby
-        await queryRunner.query(`
+    // Création de la table hobby
+    await queryRunner.query(`
             CREATE TABLE "hobby" (
                 "id" SERIAL PRIMARY KEY,
                 "name" varchar NOT NULL UNIQUE
             )
         `);
 
-        // Création de la table hobby_keywords
-        await queryRunner.query(`
+    // Création de la table hobby_keywords
+    await queryRunner.query(`
             CREATE TABLE "hobby_keywords" (
                 "hobby_id" integer NOT NULL,
                 "keyword" varchar NOT NULL,
@@ -49,8 +49,8 @@ export class InitialSchema1640000000001 implements MigrationInterface {
             )
         `);
 
-        // Création de la table weighting
-        await queryRunner.query(`
+    // Création de la table weighting
+    await queryRunner.query(`
             CREATE TABLE "weighting" (
                 "userId" varchar NOT NULL,
                 "hobbyId" integer NOT NULL,
@@ -64,8 +64,8 @@ export class InitialSchema1640000000001 implements MigrationInterface {
             )
         `);
 
-        // Tables de liaison
-        await queryRunner.query(`
+    // Tables de liaison
+    await queryRunner.query(`
             CREATE TABLE "user_followers" (
                 "user_id" varchar NOT NULL,
                 "follower_id" varchar NOT NULL,
@@ -75,7 +75,7 @@ export class InitialSchema1640000000001 implements MigrationInterface {
             )
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user_followings" (
                 "user_id" varchar NOT NULL,
                 "following_id" varchar NOT NULL,
@@ -85,7 +85,7 @@ export class InitialSchema1640000000001 implements MigrationInterface {
             )
         `);
 
-        await queryRunner.query(`
+    await queryRunner.query(`
             CREATE TABLE "user_hobby" (
                 "user_id" varchar NOT NULL,
                 "hobby_id" integer NOT NULL,
@@ -95,20 +95,28 @@ export class InitialSchema1640000000001 implements MigrationInterface {
             )
         `);
 
-        // Index pour les performances
-        await queryRunner.query(`CREATE INDEX "IDX_user_instagramId" ON "user" ("instagramId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_user_facebookId" ON "user" ("facebookId")`);
-        await queryRunner.query(`CREATE INDEX "IDX_user_category" ON "user" ("category")`);
-        await queryRunner.query(`CREATE INDEX "IDX_user_enable" ON "user" ("enable")`);
-    }
+    // Index pour les performances
+    await queryRunner.query(
+      `CREATE INDEX "IDX_user_instagramId" ON "user" ("instagramId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_user_facebookId" ON "user" ("facebookId")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_user_category" ON "user" ("category")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_user_enable" ON "user" ("enable")`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE "user_hobby"`);
-        await queryRunner.query(`DROP TABLE "user_followings"`);
-        await queryRunner.query(`DROP TABLE "user_followers"`);
-        await queryRunner.query(`DROP TABLE "weighting"`);
-        await queryRunner.query(`DROP TABLE "hobby_keywords"`);
-        await queryRunner.query(`DROP TABLE "hobby"`);
-        await queryRunner.query(`DROP TABLE "user"`);
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE "user_hobby"`);
+    await queryRunner.query(`DROP TABLE "user_followings"`);
+    await queryRunner.query(`DROP TABLE "user_followers"`);
+    await queryRunner.query(`DROP TABLE "weighting"`);
+    await queryRunner.query(`DROP TABLE "hobby_keywords"`);
+    await queryRunner.query(`DROP TABLE "hobby"`);
+    await queryRunner.query(`DROP TABLE "user"`);
+  }
 }

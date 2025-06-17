@@ -22,19 +22,17 @@ describe('UserController (e2e)', () => {
         id: 'test-user-1',
         name: 'Test User',
         biography: 'Test biography',
-        category: 'influencer'
+        category: 'influencer',
       })
       .expect(201)
       .expect((res) => {
         expect(res.body.id).toBe('test-user-1');
-        expect(res.body.name).toBe('Test User');
+        expect(res.body.name).toBe('Test user');
       });
   });
 
   it('/users/:id (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/users/test-user-1')
-      .expect(200);
+    return request(app.getHttpServer()).get('/users/test-user-1').expect(200);
   });
 
   afterAll(async () => {

@@ -1,6 +1,13 @@
-import { Entity, Column, PrimaryColumn, ManyToMany, JoinTable, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryColumn,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { HobbyOrmEntity } from '../hobby/hobby.orm-entity';
-
 @Entity({ name: 'user' })
 export class UserOrmEntity {
   @PrimaryColumn('varchar')

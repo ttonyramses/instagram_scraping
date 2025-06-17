@@ -1,6 +1,6 @@
 import { User } from './user.entity';
 
-describe('User Entity', () => {
+describe('user Entity', () => {
   describe('create', () => {
     it('should create a user with valid data', () => {
       const user = User.create('test-id', {
@@ -10,7 +10,7 @@ describe('User Entity', () => {
       });
 
       expect(user.id).toBe('test-id');
-      expect(user.name).toBe('Test User');
+      expect(user.name).toBe('Test user');
       expect(user.biography).toBe('Test bio');
       expect(user.category).toBe('influencer');
     });
@@ -18,7 +18,7 @@ describe('User Entity', () => {
     it('should throw error when creating user without id', () => {
       expect(() => {
         User.create('');
-      }).toThrow('User ID is required');
+      }).toThrow('user ID is required');
     });
   });
 

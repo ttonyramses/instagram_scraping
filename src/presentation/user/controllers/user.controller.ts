@@ -1,61 +1,64 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
-import { CreateUserDto } from '../dto/create-user.dto';
-import { UpdateUserDto } from '../dto/update-user.dto';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { UserDto } from '../dto/user.dto';
-import { CreateUserCommand } from '../../../application/user/commands/create-user.command';
-import { UpdateUserCommand } from '../../../application/user/commands/update-user.command';
-import { GetUserQuery } from '../../../application/user/queries/get-user.query';
-import { CreateUserHandler } from '../../../application/user/handlers/create-user.handler';
-import { UpdateUserHandler } from '../../../application/user/handlers/update-user.handler';
-import { GetUserHandler } from '../../../application/user/handlers/get-user.handler';
+import { UserFacadeService } from '../../../application/user/services/UserFacadeService';
+import { CreateUserCommand } from '../../../application/user/commands';
+import { CreateUserDto } from '../dto/create-user.dto';
+import { CreateUserHandler } from '../../../application/user/handlers/command';
 import { User } from '../../../domain/user/entities/user.entity';
 
 @Controller('users')
 export class UserController {
   constructor(
+    private readonly userFacade: UserFacadeService,
     private readonly createUserHandler: CreateUserHandler,
-    private readonly updateUserHandler: UpdateUserHandler,
-    private readonly getUserHandler: GetUserHandler,
   ) {}
 
-  @Post()
+  /* @Post()
+  async saveUser(@Body() userDto: UserDto) {
+    return await this.userFacade.save(userDto);
+  }*/
+
+  // Pour la creation de l'utilisateur'
+  @Post('create')
   async createUser(@Body() createUserDto: CreateUserDto): Promise<UserDto> {
-    const command = new CreateUserCommand(
+    const createUserCommand = new CreateUserCommand(
       createUserDto.id,
       createUserDto.name,
       createUserDto.biography,
-      createUserDto.instagramId,
-      createUserDto.facebookId,
-      createUserDto.category,
-      createUserDto.externalUrl,
-      createUserDto.profileUrl,
     );
 
-    const user = await this.createUserHandler.handle(command);
+    const user = await this.createUserHandler.handle(createUserCommand);
     return this.mapToDto(user);
+  }
+
+  @Post('bulk')
+  async saveUsers(@Body() userDtos: UserDto[]) {
+    return await this.userFacade.saveAll(userDtos);
   }
 
   @Get(':id')
-  async getUser(@Param('id') id: string): Promise<UserDto> {
-    const query = new GetUserQuery(id);
-    const user = await this.getUserHandler.handle(query);
-    return this.mapToDto(user);
+  async getUser(@Param('id') id: string) {
+    return await this.userFacade.findOneUser(id);
   }
 
-  @Put(':id')
-  async updateUser(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<UserDto> {
-    const command = new UpdateUserCommand(
-      id,
-      updateUserDto.name,
-      updateUserDto.biography,
-      updateUserDto.category,
-    );
+  @Get()
+  async getAllUsers() {
+    return await this.userFacade.findAll();
+  }
 
-    const user = await this.updateUserHandler.handle(command);
-    return this.mapToDto(user);
+  @Get('filter/no-info')
+  async getUsersWithNoInfo() {
+    return await this.userFacade.findAllWithNoInfo();
+  }
+
+  @Get('filter/no-followers')
+  async getUsersWithNoFollowers() {
+    return await this.userFacade.findAllWithNoFollowers();
+  }
+
+  @Get('filter/no-followings')
+  async getUsersWithNoFollowings() {
+    return await this.userFacade.findAllWithNoFollowings();
   }
 
   private mapToDto(user: User): UserDto {
@@ -78,8 +81,6 @@ export class UserController {
       enable: user.enable,
       maxIdFollower: user.maxIdFollower,
       maxIdFollowing: user.maxIdFollowing,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
     };
   }
 }
