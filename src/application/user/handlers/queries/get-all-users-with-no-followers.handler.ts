@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { UserDto } from '../../../../presentation/user/dto/user.dto';
 import {
   USER_REPOSITORY,
   UserRepository,
 } from '../../../../domain/user/ports/user.repository.interface';
+import { User } from '../../../../domain/user/entities/user.entity';
 
 @Injectable()
 export class GetAllUsersWithNoFollowersHandler {
@@ -13,11 +13,11 @@ export class GetAllUsersWithNoFollowersHandler {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
   ) {}
 
-  async handle(): Promise<UserDto[]> {
+  async handle(): Promise<User[]> {
     try {
       return await this.userRepository.findAllWithNoFollowers();
     } catch (error) {
-      this.logger.error('FindAllUsersWithNoFollowersHandler error', error);
+      this.logger.error('GetAllUsersWithNoFollowersHandler error', error);
       return [];
     }
   }

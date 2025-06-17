@@ -17,4 +17,6 @@ export class UserDto {
   enable?: boolean;
   maxIdFollower?: string;
   maxIdFollowing?: string;
+  createAt?: Date;
+  updateAt?: Date;
 }

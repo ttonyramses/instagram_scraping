@@ -5,25 +5,27 @@ import { User } from '../../../domain/user/entities/user.entity';
 import { UserRepository } from '../../../domain/user/ports/user.repository.interface';
 import { UserOrmEntity } from './user.orm-entity';
 import { UserMapper } from './user.mapper';
-import { UserDto } from '../../../presentation/user/dto/user.dto';
+import { Hobby } from '../../../domain/hobby/entities/hobby.entity';
 
 @Injectable()
 export class TypeOrmUserRepository implements UserRepository {
   private readonly logger = new Logger(TypeOrmUserRepository.name);
+
   constructor(
     @InjectRepository(UserOrmEntity)
     private readonly userOrmRepository: Repository<UserOrmEntity>,
     private readonly userMapper: UserMapper,
   ) {}
 
-  async findById(id: string): Promise<User | null> {
+  async findOneById(id: string): Promise<User | null> {
     const userOrm = await this.userOrmRepository.findOne({
       where: { id },
     });
     return userOrm ? this.userMapper.toDomain(userOrm) : null;
   }
 
-  async findWithRelations(
+  // on general relations sera egale à ['followers', 'followings', 'hobbies']
+  async findOneWithRelations(
     id: string,
     relations: string[] = [],
   ): Promise<User | null> {
@@ -34,34 +36,55 @@ export class TypeOrmUserRepository implements UserRepository {
     return userOrm ? this.userMapper.toDomain(userOrm) : null;
   }
 
-  async findByInstagramId(instagramId: number): Promise<User | null> {
-    const userOrm = await this.userOrmRepository.findOne({
-      where: { instagramId },
-    });
-    return userOrm ? this.userMapper.toDomain(userOrm) : null;
-  }
-
-  async findByFacebookId(facebookId: number): Promise<User | null> {
-    const userOrm = await this.userOrmRepository.findOne({
-      where: { facebookId },
-    });
-    return userOrm ? this.userMapper.toDomain(userOrm) : null;
-  }
-
   async findAll(): Promise<User[]> {
     const usersOrm = await this.userOrmRepository.find();
     return usersOrm.map((userOrm) => this.userMapper.toDomain(userOrm));
   }
 
-  async save(userDto: UserDto): Promise<void> {
-    const user = await this.userOrmRepository.findOne({
-      where: { id: userDto.id },
-    });
-    if (user) {
-      await this.userOrmRepository.update(userDto.id, userDto);
-    } else {
-      await this.userOrmRepository.save(userDto);
+  async findAllWithAtLeastOneHobby(): Promise<User[]> {
+    let userOrms = new Array<UserOrmEntity>();
+
+    try {
+      userOrms = await this.userOrmRepository
+        .createQueryBuilder('user')
+        .innerJoinAndSelect('user.hobbies', 'hobby') // Utilise innerJoin pour garantir la présence de hobbies
+        .select(['user', 'COUNT(hobby.id) as hobbyCount'])
+        .where('user.enable = :param_enable', { param_enable: true })
+        .groupBy('user.id') // Regroupe les résultats par utilisateur
+        .having('COUNT(hobby.id) > 0') // S'assure que chaque utilisateur a au moins un hobby
+        .getMany();
+    } catch (error) {
+      this.logger.error(
+        'findAllWithAtLeastOneHobby Error fetching users with at least one hobby:',
+        error,
+      );
+      return []; // Retourne un tableau vide en cas d'erreur
     }
+    return userOrms.map((userOrm) => this.userMapper.toDomain(userOrm));
+  }
+
+  async findAllWithSpecificHobbies(hobbiesList: string[]): Promise<User[]> {
+    let userOrms = new Array<UserOrmEntity>();
+    try {
+      userOrms = await this.userOrmRepository
+        .createQueryBuilder('user')
+        .innerJoinAndSelect('user.hobbies', 'hobby')
+        .select(['user', 'COUNT(hobby.id) as hobbyCount'])
+        .where('hobby.name IN (:...hobbies) and user.enable = :param_enable', {
+          hobbies: hobbiesList,
+          param_enable: true,
+        }) // Filtrage basé sur les noms de hobbies
+        .groupBy('user.id')
+        .having('COUNT(hobby.id) > 0')
+        .getMany();
+    } catch (error) {
+      this.logger.error(
+        'findAllWithSpecificHobbies Error fetching users with specific hobbies:',
+        error,
+      );
+      return []; // Retourne un tableau vide en cas d'erreur
+    }
+    return userOrms.map((userOrm) => this.userMapper.toDomain(userOrm));
   }
 
   async delete(id: string): Promise<void> {
@@ -75,14 +98,7 @@ export class TypeOrmUserRepository implements UserRepository {
     return usersOrm.map((userOrm) => this.userMapper.toDomain(userOrm));
   }
 
-  async findActiveUsers(): Promise<User[]> {
-    const usersOrm = await this.userOrmRepository.find({
-      where: { enable: true },
-    });
-    return usersOrm.map((userOrm) => this.userMapper.toDomain(userOrm));
-  }
-
-  async addFollowers(id: string, followers: UserDto[]): Promise<void> {
+  async addFollowers(id: string, followers: User[]): Promise<void> {
     await this.userOrmRepository
       .createQueryBuilder()
       .relation(UserOrmEntity, 'followers')
@@ -96,7 +112,7 @@ export class TypeOrmUserRepository implements UserRepository {
       .add(followers ?? []);
   }
 
-  async addFollowings(id: string, followings: UserDto[]): Promise<void> {
+  async addFollowings(id: string, followings: User[]): Promise<void> {
     await this.userOrmRepository
       .createQueryBuilder()
       .relation(User, 'followings')
@@ -110,7 +126,7 @@ export class TypeOrmUserRepository implements UserRepository {
       .add(followings ?? []);
   }
 
-  async findAllWithNoFollowers(): Promise<UserDto[]> {
+  async findAllWithNoFollowers(): Promise<User[]> {
     const users = await this.userOrmRepository.find({
       where: {
         hasFollowerProcess: false,
@@ -118,19 +134,18 @@ export class TypeOrmUserRepository implements UserRepository {
       },
     });
 
-    // Conversion de User[] en UserDto[]
-    return users.map((user) => {
-      const userDto = new UserDto();
-      Object.assign(userDto, user);
-      return userDto;
+    // Conversion de User[] en User[]
+    return users.map((userOrm) => {
+      return this.userMapper.toDomain(userOrm);
     });
   }
+
   catch(error) {
     this.logger.error('findAllWithNoFollowers error:', error);
     return [];
   }
 
-  async findAllWithNoFollowings(): Promise<UserDto[]> {
+  async findAllWithNoFollowings(): Promise<User[]> {
     try {
       const users = await this.userOrmRepository.find({
         where: {
@@ -139,11 +154,9 @@ export class TypeOrmUserRepository implements UserRepository {
         },
       });
 
-      // Conversion de User[] en UserDto[]
-      return users.map((user) => {
-        const userDto = new UserDto();
-        Object.assign(userDto, user);
-        return userDto;
+      // Conversion de User[] en User[]
+      return users.map((userOrm) => {
+        return this.userMapper.toDomain(userOrm);
       });
     } catch (error) {
       this.logger.error('findAllWithNoFollowings error:', error);
@@ -161,17 +174,59 @@ export class TypeOrmUserRepository implements UserRepository {
     return usersOrm.map((userOrm) => this.userMapper.toDomain(userOrm));
   }
 
-  async findOneUser(pseudo: string): Promise<UserDto> {
-    try {
-      return await this.userOrmRepository.findOne({
-        where: { id: pseudo },
-      });
-    } catch (error) {
-      this.logger.error('findOneUser', error);
-    }
+  async findAllWithNoHobbies(): Promise<User[]> {
+    return Promise.resolve([]);
   }
 
-  async saveAll(userDtos: UserDto[]): Promise<void> {
-    await this.userOrmRepository.save(userDtos);
+  async save(user: User): Promise<User> {
+    const userOrm = this.userMapper.toOrm(user);
+    const userSave = await this.userOrmRepository.save(userOrm);
+    return this.userMapper.toDomain(userSave);
+  }
+
+  async saveAll(users: User[]): Promise<void> {
+    await this.userOrmRepository.save(users);
+  }
+
+  async bindFollowersToOneUser(id: string, followers: User[]): Promise<void> {
+    await this.userOrmRepository
+      .createQueryBuilder()
+      .relation(User, 'followers')
+      .of(id)
+      .remove(followers ?? []);
+
+    await this.userOrmRepository
+      .createQueryBuilder()
+      .relation(User, 'followers')
+      .of(id)
+      .add(followers ?? []);
+  }
+
+  async bindFollowingsToOneUser(id: string, followings: User[]): Promise<void> {
+    await this.userOrmRepository
+      .createQueryBuilder()
+      .relation(User, 'followings')
+      .of(id)
+      .remove(followings ?? []);
+
+    await this.userOrmRepository
+      .createQueryBuilder()
+      .relation(User, 'followings')
+      .of(id)
+      .add(followings ?? []);
+  }
+
+  async bindHobbiesToOneUser(id: string, hobbies: Hobby[]): Promise<void> {
+    await this.userOrmRepository
+      .createQueryBuilder()
+      .relation(User, 'hobbies')
+      .of(id)
+      .remove(hobbies ?? []);
+
+    await this.userOrmRepository
+      .createQueryBuilder()
+      .relation(User, 'hobbies')
+      .of(id)
+      .add(hobbies ?? []);
   }
 }

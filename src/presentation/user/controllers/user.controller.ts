@@ -4,13 +4,14 @@ import { UserFacadeService } from '../../../application/user/services/UserFacade
 import { CreateUserCommand } from '../../../application/user/commands';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { CreateUserHandler } from '../../../application/user/handlers/command';
-import { User } from '../../../domain/user/entities/user.entity';
+import { UserDtoMapper } from '../dto/user.dto.mapper';
 
 @Controller('users')
 export class UserController {
   constructor(
     private readonly userFacade: UserFacadeService,
     private readonly createUserHandler: CreateUserHandler,
+    private readonly userDtoMapper: UserDtoMapper,
   ) {}
 
   /* @Post()
@@ -20,25 +21,29 @@ export class UserController {
 
   // Pour la creation de l'utilisateur'
   @Post('create')
-  async createUser(@Body() createUserDto: CreateUserDto): Promise<UserDto> {
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<Partial<UserDto>> {
     const createUserCommand = new CreateUserCommand(
-      createUserDto.id,
-      createUserDto.name,
-      createUserDto.biography,
+      this.userDtoMapper.toDomain(createUserDto),
     );
 
     const user = await this.createUserHandler.handle(createUserCommand);
-    return this.mapToDto(user);
+    return this.userDtoMapper.toDto(user);
   }
 
   @Post('bulk')
-  async saveUsers(@Body() userDtos: UserDto[]) {
-    return await this.userFacade.saveAll(userDtos);
+  async saveUsers(@Body() createUserDtos: CreateUserDto[]) {
+    return await this.userFacade.saveAll(
+      createUserDtos.map((createUserDto) =>
+        this.userDtoMapper.toDomain(createUserDto),
+      ),
+    );
   }
 
   @Get(':id')
   async getUser(@Param('id') id: string) {
-    return await this.userFacade.findOneUser(id);
+    return await this.userFacade.getOneUserWithRelations(id);
   }
 
   @Get()
@@ -59,28 +64,5 @@ export class UserController {
   @Get('filter/no-followings')
   async getUsersWithNoFollowings() {
     return await this.userFacade.findAllWithNoFollowings();
-  }
-
-  private mapToDto(user: User): UserDto {
-    return {
-      id: user.id,
-      name: user.name,
-      biography: user.biography,
-      json: user.json,
-      nbFollowers: user.nbFollowers,
-      nbFollowings: user.nbFollowings,
-      nbPublications: user.nbPublications,
-      instagramId: user.instagramId,
-      facebookId: user.facebookId,
-      category: user.category,
-      externalUrl: user.externalUrl,
-      profileUrl: user.profileUrl,
-      hasInfo: user.hasInfo,
-      hasFollowerProcess: user.hasFollowerProcess,
-      hasFollowingProcess: user.hasFollowingProcess,
-      enable: user.enable,
-      maxIdFollower: user.maxIdFollower,
-      maxIdFollowing: user.maxIdFollowing,
-    };
   }
 }

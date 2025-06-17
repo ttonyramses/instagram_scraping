@@ -1,23 +1,26 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { UpdateUserCommand } from '../../commands/update-user.command';
+import { UpdateUserCommand } from "../../commands";
 import { User } from '../../../../domain/user/entities/user.entity';
-import { UserRepository } from '../../../../domain/user/ports/user.repository.interface';
+import {
+  USER_REPOSITORY,
+  UserRepository,
+} from '../../../../domain/user/ports/user.repository.interface';
 import { UserNotFoundException } from '../../../../domain/user/exceptions/user.exceptions';
 
 @Injectable()
 export class UpdateUserHandler {
   constructor(
-    @Inject('UserRepository')
+    @Inject(USER_REPOSITORY)
     private readonly userRepository: UserRepository,
   ) {}
 
-  async handle(command: UpdateUserCommand): Promise<void> {
-    const user = await this.userRepository.findById(command.id);
+  async handle(updateUserCommand: UpdateUserCommand): Promise<User> {
+    const user = await this.userRepository.findOneById(
+      updateUserCommand.user.id,
+    );
     if (!user) {
-      throw new UserNotFoundException(command.id);
+      throw new UserNotFoundException(updateUserCommand.user.id);
     }
-
-    user.updateProfile(command.name, command.biography, command.category);
 
     return await this.userRepository.save(user);
   }

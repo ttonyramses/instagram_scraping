@@ -1,7 +1,4 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '../../../../domain/user/entities/user.entity';
-import { Repository } from 'typeorm';
 import { SaveAllUsersCommand } from '../../commands';
 import {
   USER_REPOSITORY,
@@ -18,7 +15,7 @@ export class SaveAllUsersHandler {
 
   async handle(saveAllUsersCommand: SaveAllUsersCommand): Promise<void> {
     try {
-      await this.userRepository.saveAll(saveAllUsersCommand.userDtos);
+      await this.userRepository.saveAll(saveAllUsersCommand.users);
     } catch (error) {
       this.logger.error('SaveUsersHandler error', error);
       throw error;

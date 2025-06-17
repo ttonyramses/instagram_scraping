@@ -1,57 +1,75 @@
 import {
-  AddFollowersCommand,
-  AddFollowingsCommand,
+  CreateUserCommand,
   SaveAllUsersCommand,
-  SaveUserCommand,
+  UpdateUserCommand,
 } from '../commands';
 import { Injectable } from '@nestjs/common';
 import {
-  AddFollowersHandler,
-  AddFollowingsHandler,
+  BindFollowersToOneUserHandler,
+  BindFollowingsToOneUserHandler,
+  BindHobbiesToOneUserHandler,
+  CreateUserHandler,
   SaveAllUsersHandler,
-  SaveUserHandler,
+  UpdateUserHandler,
 } from '../handlers/command';
-import { UserDto } from '../../../presentation/user/dto/user.dto';
-import { GetOneUserQuery } from '../queries';
 import { User } from '../../../domain/user/entities/user.entity';
 import {
   GetAllUsersHandler,
+  GetAllUsersWithAtLeastOneHobbyHandler,
   GetAllUsersWithNoFollowersHandler,
+  GetAllUsersWithNoFollowingsHandler,
+  GetAllUsersWithNoHobbiesHandler,
+  GetAllUsersWithNoInfoHandler,
+  GetAllUsersWithSpecificHobbiesHandler,
   GetOneUserHandler,
-  GetUsersWithNoFollowingsHandler,
-  GetUsersWithNoInfoHandler,
+  GetOneUserWithRelationsHandler,
 } from '../handlers/queries';
+import { GetOneUserWithRelationsQuery } from '../queries';
 
 @Injectable()
 export class UserFacadeService {
   constructor(
     // Command Handlers
-    private readonly saveUserHandler: SaveUserHandler,
+    private readonly bindFollowersToOneUserHandler: BindFollowersToOneUserHandler,
+    private readonly bindFollowingsToOneUserHandler: BindFollowingsToOneUserHandler,
+    private readonly bindHobbiesToOneUserHandler: BindHobbiesToOneUserHandler,
+    private readonly createUserHandler: CreateUserHandler,
     private readonly saveAllUsersHandler: SaveAllUsersHandler,
-    private readonly addFollowersHandler: AddFollowersHandler,
-    private readonly addFollowingsHandler: AddFollowingsHandler,
+    private readonly updateUserHandler: UpdateUserHandler,
     // Query Handlers
-    private readonly getOneUserHandler: GetOneUserHandler,
     private readonly getAllUsersHandler: GetAllUsersHandler,
-    private readonly getUsersWithNoInfoHandler: GetUsersWithNoInfoHandler,
+    private readonly getAllUsersWithAtLeastOneHobbyHandler: GetAllUsersWithAtLeastOneHobbyHandler,
     private readonly getUsersWithNoFollowersHandler: GetAllUsersWithNoFollowersHandler,
-    private readonly getAllUsersWithNoFollowingsHandler: GetUsersWithNoFollowingsHandler,
+    private readonly getAllUsersWithNoFollowingsHandler: GetAllUsersWithNoFollowingsHandler,
+    private readonly getAllUsersWithNoHobbiesHandler: GetAllUsersWithNoHobbiesHandler,
+    private readonly getAllUsersWithNoInfoHandler: GetAllUsersWithNoInfoHandler,
+    private readonly getAllUsersWithSpecificHobbiesHandler: GetAllUsersWithSpecificHobbiesHandler,
+    private readonly getOneUserHandler: GetOneUserHandler,
+    private readonly getOneUserWithRelationsHandler: GetOneUserWithRelationsHandler,
   ) {}
 
   // Méthodes de commodité qui conservent l'interface de votre ancien service
-  async save(userDto: UserDto): Promise<void> {
-    const saveUserCommand = new SaveUserCommand(userDto);
-    return await this.saveUserHandler.handle(saveUserCommand);
+  async createUser(user: User): Promise<User> {
+    const createUserCommand = new CreateUserCommand(user);
+    return await this.createUserHandler.handle(createUserCommand);
   }
 
-  async saveAll(userDtos: UserDto[]): Promise<void> {
-    const saveAllUsersCommand = new SaveAllUsersCommand(userDtos);
+  async updateUser(user: User): Promise<User> {
+    const updateUserCommand = new UpdateUserCommand(user);
+    return await this.updateUserHandler.handle(updateUserCommand);
+  }
+
+  async saveAll(users: User[]): Promise<void> {
+    const saveAllUsersCommand = new SaveAllUsersCommand(users);
     return await this.saveAllUsersHandler.handle(saveAllUsersCommand);
   }
 
-  async findOneUser(id: string): Promise<UserDto> {
-    const getOneUserQuery = new GetOneUserQuery(id);
-    return await this.getOneUserHandler.handle(getOneUserQuery);
+  async getOneUserWithRelations(
+    id: string,
+    relations?: string[],
+  ): Promise<User> {
+    const getOneUserQuery = new GetOneUserWithRelationsQuery(id, relations);
+    return await this.getOneUserWithRelationsHandler.handle(getOneUserQuery);
   }
 
   async findAll(): Promise<User[]> {
@@ -59,24 +77,30 @@ export class UserFacadeService {
   }
 
   async findAllWithNoInfo(): Promise<User[]> {
-    return await this.getUsersWithNoInfoHandler.handle();
+    return await this.getAllUsersWithNoInfoHandler.handle();
   }
 
-  async findAllWithNoFollowers(): Promise<UserDto[]> {
+  async findAllWithNoFollowers(): Promise<User[]> {
     return await this.getUsersWithNoFollowersHandler.handle();
   }
 
-  async findAllWithNoFollowings(): Promise<UserDto[]> {
-    return await this.getAllUsersWithNoFollowingsHandler.handle();
+  async findAllWithNoFollowings(): Promise<User[]> {
+    return await this.getAllUsersWithNoHobbiesHandler.handle();
   }
 
-  async addFollowers(id: string, followers: UserDto[]): Promise<void> {
-    const addFollowersCommand = new AddFollowersCommand(id, followers);
-    return await this.addFollowersHandler.handle(addFollowersCommand);
-  }
-
-  async addFollowings(id: string, followings: UserDto[]): Promise<void> {
-    const addFollowingsCommand = new AddFollowingsCommand(id, followings);
-    return await this.addFollowingsHandler.handle(addFollowingsCommand);
-  }
+  /* async addFollowers(id: string, followers: User[]): Promise<void> {
+     const addFollowersCommand = new BindFollowersToOneUserCommand(
+       id,
+       followers,
+     );
+     return await this.bindFollowersToOneUserHandler.handle(addFollowersCommand);
+   }
+ 
+   async addFollowings(id: string, followings: User[]): Promise<void> {
+     const addFollowingsCommand = new BindFollowingsToOneUserCommand(
+       id,
+       followings,
+     );
+     return await this.bindHobbiesToOneUserHandler1.handle(addFollowingsCommand);
+   }*/
 }

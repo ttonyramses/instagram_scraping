@@ -6,8 +6,10 @@ import {
 } from '../../../../domain/user/ports/user.repository.interface';
 
 @Injectable()
-export class GetUsersWithNoInfoHandler {
-  private readonly logger = new Logger(GetUsersWithNoInfoHandler.name);
+export class GetAllUsersWithAtLeastOneHobbyHandler {
+  private readonly logger = new Logger(
+    GetAllUsersWithAtLeastOneHobbyHandler.name,
+  );
 
   constructor(
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
@@ -15,9 +17,9 @@ export class GetUsersWithNoInfoHandler {
 
   async handle(): Promise<User[]> {
     try {
-      return await this.userRepository.findAllWithNoInfo();
+      return await this.userRepository.findAllWithAtLeastOneHobby();
     } catch (error) {
-      this.logger.error('FindAllUsersWithNoInfoHandler error', error);
+      this.logger.error('GetAllUsersWithAtLeastOneHobbyHandler error', error);
       throw error;
     }
   }

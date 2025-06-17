@@ -1,5 +1,5 @@
-import { UserDto } from '../../../presentation/user/dto/user.dto';
+import { User } from '../../../domain/user/entities/user.entity';
 
 export class SaveAllUsersCommand {
-  constructor(public readonly userDtos: UserDto[]) {}
+  constructor(public readonly users: User[]) {}
 }

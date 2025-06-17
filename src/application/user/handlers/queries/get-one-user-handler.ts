@@ -4,7 +4,7 @@ import {
   USER_REPOSITORY,
   UserRepository,
 } from '../../../../domain/user/ports/user.repository.interface';
-import { UserDto } from '../../../../presentation/user/dto/user.dto';
+import { User } from '../../../../domain/user/entities/user.entity';
 
 @Injectable()
 export class GetOneUserHandler {
@@ -14,11 +14,11 @@ export class GetOneUserHandler {
     @Inject(USER_REPOSITORY) private readonly userRepository: UserRepository,
   ) {}
 
-  async handle(getOneUserQuery: GetOneUserQuery): Promise<UserDto | null> {
+  async handle(getOneUserQuery: GetOneUserQuery): Promise<User | null> {
     try {
-      return await this.userRepository.findOneUser(getOneUserQuery.id);
+      return await this.userRepository.findOneById(getOneUserQuery.id);
     } catch (error) {
-      this.logger.error('FindOneUserHandler error', error);
+      this.logger.error('GetOneUserHandler error', error);
       throw error;
     }
   }

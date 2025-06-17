@@ -1,5 +1,7 @@
 import { IsOptional, IsString, IsNumber, IsUrl } from 'class-validator';
+import { Expose } from 'class-transformer';
 
+@Expose()
 export class CreateUserDto {
   @IsString()
   id: string;
@@ -31,4 +33,16 @@ export class CreateUserDto {
   @IsOptional()
   @IsUrl()
   profileUrl?: string;
+
+  hasInfo?: boolean;
+  hasFollowerProcess?: boolean;
+  hasFollowingProcess?: boolean;
+  enable?: boolean;
+  maxIdFollower?: string;
+  maxIdFollowing?: string;
+
+  json?: object;
+  nbFollowers?: number;
+  nbFollowings?: number;
+  nbPublications?: number;
 }

@@ -184,14 +184,6 @@ export class User {
   }
 
   // Méthodes métier
-  updateProfile(name?: string, biography?: string, category?: string): void {
-    if (name !== undefined) this._name = name;
-    if (biography !== undefined) this._biography = biography;
-    if (category !== undefined) this._category = category;
-    this._hasInfo = !!(this._name || this._biography);
-    this._updatedAt = new Date();
-  }
-
   enableUser(): void {
     this._enable = true;
     this._updatedAt = new Date();

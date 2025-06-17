@@ -6,18 +6,23 @@ import { UserController } from '../../presentation/user/controllers/user.control
 
 // Handlers
 import {
-  AddFollowersHandler,
-  AddFollowingsHandler,
+  BindFollowersToOneUserHandler,
+  BindFollowingsToOneUserHandler,
+  BindHobbiesToOneUserHandler,
   CreateUserHandler,
   SaveAllUsersHandler,
-  SaveUserHandler,
+  UpdateUserHandler,
 } from './handlers/command';
 import {
   GetAllUsersHandler,
   GetAllUsersWithNoFollowersHandler,
   GetOneUserHandler,
-  GetUsersWithNoFollowingsHandler,
-  GetUsersWithNoInfoHandler,
+  GetAllUsersWithNoFollowingsHandler,
+  GetAllUsersWithNoInfoHandler,
+  GetAllUsersWithNoHobbiesHandler,
+  GetAllUsersWithSpecificHobbiesHandler,
+  GetOneUserWithRelationsHandler,
+  GetAllUsersWithAtLeastOneHobbyHandler,
 } from './handlers/queries';
 // Infrastructure
 import { UserFacadeService } from './services/UserFacadeService';
@@ -26,6 +31,7 @@ import { UserOrmEntity } from '../../infrastructure/persistence/user/user.orm-en
 import { HobbyOrmEntity } from '../../infrastructure/persistence/hobby/hobby.orm-entity';
 import { UserMapper } from '../../infrastructure/persistence/user/user.mapper';
 import { USER_REPOSITORY } from '../../domain/user/ports/user.repository.interface';
+import { UserDtoMapper } from '../../presentation/user/dto/user.dto.mapper';
 
 // Interfaces
 
@@ -33,18 +39,26 @@ import { USER_REPOSITORY } from '../../domain/user/ports/user.repository.interfa
   imports: [TypeOrmModule.forFeature([UserOrmEntity, HobbyOrmEntity])],
   providers: [
     // Command Handlers
-    SaveUserHandler,
-    SaveAllUsersHandler,
-    AddFollowersHandler,
-    AddFollowingsHandler,
+    BindFollowersToOneUserHandler,
+    BindFollowingsToOneUserHandler,
+    BindHobbiesToOneUserHandler,
     CreateUserHandler,
+    SaveAllUsersHandler,
+    UpdateUserHandler,
 
     // Query Handlers
     GetAllUsersHandler,
-    GetOneUserHandler,
-    GetUsersWithNoInfoHandler,
     GetAllUsersWithNoFollowersHandler,
-    GetUsersWithNoFollowingsHandler,
+    GetAllUsersWithNoFollowingsHandler,
+    GetAllUsersWithNoHobbiesHandler,
+    GetAllUsersWithNoInfoHandler,
+    GetAllUsersWithSpecificHobbiesHandler,
+    GetOneUserHandler,
+    GetOneUserWithRelationsHandler,
+    GetAllUsersWithAtLeastOneHobbyHandler,
+
+    //Presentation
+    UserDtoMapper,
 
     // Infrastructure
     UserMapper,
