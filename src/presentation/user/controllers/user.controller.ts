@@ -3,6 +3,8 @@ import { UserDto } from '../dto/user.dto';
 import { UserFacadeService } from '../../../application/user/services/UserFacadeService';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UserDtoMapper } from '../dto/user.dto.mapper';
+import { Paginate, Paginated, PaginateQuery } from 'nestjs-paginate';
+import { PaginationUtils } from '../../../utils/pagination-utils';
 
 @Controller('users')
 export class UserController {
@@ -41,6 +43,16 @@ export class UserController {
 
     const user = await this.userFacade.updateUser(updateUser);
     return this.userDtoMapper.entityToUserDto(user);
+  }
+
+  @Get('page')
+  async getAllUsersPage(
+    @Paginate() query: PaginateQuery,
+  ): Promise<Paginated<UserDto>> {
+    const paginatedUsers = await this.userFacade.findAllPage(query);
+    return PaginationUtils.mapPaginatedResult(paginatedUsers, (user) =>
+      this.userDtoMapper.entityToUserDto(user),
+    );
   }
 
   @Get(':id')

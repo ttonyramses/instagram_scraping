@@ -25,6 +25,9 @@ import {
   GetOneUserWithRelationsHandler,
 } from '../handlers/queries';
 import { GetOneUserWithRelationsQuery } from '../queries';
+import { PaginateQuery, Paginated } from 'nestjs-paginate';
+import { GetAllUsersPageHandler } from '../handlers/queries/get-all-users-page-handler';
+import { GetAllUsersPageQuery } from '../queries/get-all-users-page.query';
 
 @Injectable()
 export class UserFacadeService {
@@ -46,6 +49,7 @@ export class UserFacadeService {
     private readonly getAllUsersWithSpecificHobbiesHandler: GetAllUsersWithSpecificHobbiesHandler,
     private readonly getOneUserHandler: GetOneUserHandler,
     private readonly getOneUserWithRelationsHandler: GetOneUserWithRelationsHandler,
+    private readonly getAllUsersPageHandler: GetAllUsersPageHandler,
   ) {}
 
   // Méthodes de commodité qui conservent l'interface de votre ancien service
@@ -74,6 +78,11 @@ export class UserFacadeService {
 
   async findAll(): Promise<User[]> {
     return await this.getAllUsersHandler.handle();
+  }
+
+  async findAllPage(query: PaginateQuery): Promise<Paginated<User>> {
+    const getAllUsersPageQuery = new GetAllUsersPageQuery(query);
+    return await this.getAllUsersPageHandler.handle(getAllUsersPageQuery);
   }
 
   async findAllWithNoInfo(): Promise<User[]> {

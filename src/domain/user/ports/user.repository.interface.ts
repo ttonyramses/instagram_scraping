@@ -1,5 +1,6 @@
 import { User } from '../entities/user.entity';
 import { Hobby } from '../../hobby/entities/hobby.entity';
+import { Paginated, PaginateQuery } from 'nestjs-paginate';
 
 export const USER_REPOSITORY = Symbol('UserRepository');
 
@@ -9,6 +10,8 @@ export interface UserRepository {
   findOneWithRelations(id: string, relations?: string[]): Promise<User | null>;
 
   findAll(): Promise<User[]>;
+
+  findAllPaginated(query: PaginateQuery): Promise<Paginated<User>>;
 
   findAllWithAtLeastOneHobby(): Promise<User[]>;
 

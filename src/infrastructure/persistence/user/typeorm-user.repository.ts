@@ -6,6 +6,8 @@ import { UserRepository } from '../../../domain/user/ports/user.repository.inter
 import { UserOrmEntity } from './user.orm-entity';
 import { UserMapper } from './user.mapper';
 import { Hobby } from '../../../domain/hobby/entities/hobby.entity';
+import { paginate, Paginated, PaginateQuery } from 'nestjs-paginate';
+import { PaginationUtils } from '../../../utils/pagination-utils';
 
 @Injectable()
 export class TypeOrmUserRepository implements UserRepository {
@@ -39,6 +41,18 @@ export class TypeOrmUserRepository implements UserRepository {
   async findAll(): Promise<User[]> {
     const usersOrm = await this.userOrmRepository.find();
     return usersOrm.map((userOrm) => this.userMapper.toDomain(userOrm));
+  }
+
+  async findAllPaginated(query: PaginateQuery): Promise<Paginated<User>> {
+    const paginationResult = await paginate(query, this.userOrmRepository, {
+      sortableColumns: ['id', 'biography', 'name', 'instagramId', 'facebookId'],
+      nullSort: 'last',
+      defaultSortBy: [['id', 'DESC']],
+      select: ['id', 'biography', 'name', 'instagramId', 'facebookId'],
+    });
+    return PaginationUtils.mapPaginatedResult(paginationResult, (userOrm) =>
+      this.userMapper.toDomain(userOrm),
+    );
   }
 
   async findAllWithAtLeastOneHobby(): Promise<User[]> {

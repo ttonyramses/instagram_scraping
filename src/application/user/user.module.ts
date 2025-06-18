@@ -32,6 +32,7 @@ import { HobbyOrmEntity } from '../../infrastructure/persistence/hobby/hobby.orm
 import { UserMapper } from '../../infrastructure/persistence/user/user.mapper';
 import { USER_REPOSITORY } from '../../domain/user/ports/user.repository.interface';
 import { UserDtoMapper } from '../../presentation/user/dto/user.dto.mapper';
+import { GetAllUsersPageHandler } from './handlers/queries/get-all-users-page-handler';
 
 // Interfaces
 
@@ -56,6 +57,7 @@ import { UserDtoMapper } from '../../presentation/user/dto/user.dto.mapper';
     GetOneUserHandler,
     GetOneUserWithRelationsHandler,
     GetAllUsersWithAtLeastOneHobbyHandler,
+    GetAllUsersPageHandler,
 
     //Presentation
     UserDtoMapper,
