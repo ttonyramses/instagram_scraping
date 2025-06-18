@@ -1,11 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  FilterOperator,
-  FilterSuffix,
-  PaginateQuery,
-  Paginated,
-  paginate,
-} from 'nestjs-paginate';
+import { Paginated } from 'nestjs-paginate';
 import {
   USER_REPOSITORY,
   UserRepository,
