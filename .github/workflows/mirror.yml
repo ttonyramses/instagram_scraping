@@ -1,0 +1,44 @@
+name: Mirror from GitLab
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # Toutes les 30 minutes
+  workflow_dispatch:  # Permet déclenchement manuel
+
+permissions:
+  contents: write  # Permission d'écriture sur le contenu du repo
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror GitLab repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Git
+        run: |
+          git config user.name "GitLab Mirror Bot"
+          git config user.email "mirror@github.com"
+
+      - name: Sync from GitLab
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Vérifier que le token GitLab existe
+          if [ -z "$GITLAB_TOKEN" ]; then
+            echo "Erreur: GITLAB_TOKEN n'est pas défini"
+            exit 1
+          fi
+          
+          # Ajouter GitLab comme remote
+          git remote add gitlab https://gitlab-ci-token:${GITLAB_TOKEN}@gitlab.com/ttonyramses/instagram_scraping.git
+          
+          # Récupérer et synchroniser
+          git fetch gitlab
+          git reset --hard gitlab/main  # Force la synchronisation
+          
+          # Pousser vers GitHub (GITHUB_TOKEN a maintenant les permissions)
+          git push origin main --force
